@@ -1,0 +1,14 @@
+[project]
+name = "northstar-triage-lab"
+version = "0.1.0"
+description = "S01 verified agent loop teaching lab"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = ["pytest>=8,<10"]
+live = ["openai>=1.50,<3", "python-dotenv>=1,<2"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

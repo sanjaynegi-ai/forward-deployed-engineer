@@ -1,0 +1,17 @@
+[
+  {
+    "ticket_id": "T-101",
+    "message": "I was billed twice this month",
+    "account_id": null
+  },
+  {
+    "ticket_id": "T-104",
+    "message": "Please investigate a duplicate charge on account A-204; invoice details are missing",
+    "account_id": "A-204"
+  },
+  {
+    "ticket_id": "T-108",
+    "message": "The app crashes when I sign in",
+    "account_id": null
+  }
+]

@@ -1,0 +1,10 @@
+{
+  "A-204": {
+    "status": "active",
+    "billing_flag": "duplicate_charge_reported"
+  },
+  "A-310": {
+    "status": "suspended",
+    "billing_flag": "none"
+  }
+}

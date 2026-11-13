@@ -1,0 +1,53 @@
+# Local environments and secrets
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+
+# Python and notebook-generated files
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.coverage
+htmlcov/
+
+# Build and packaging output
+build/
+dist/
+*.egg-info/
+
+# Editors and operating systems
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Course-development material is not learner-facing
+mentor/
+instructor/
+facilitator/
+authoring/
+drafts/
+private/
+internal/
+notes/
+transcripts/
+answer-keys/
+*mentor*.md
+*instructor*.md
+*facilitator*.md
+*runbook*.md
+*transcript*.md
+
+# Local exports and temporary files
+*.log
+*.tmp
+*.bak
+exports/
+
