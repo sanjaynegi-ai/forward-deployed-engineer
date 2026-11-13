@@ -17,12 +17,14 @@ particular calendar.
 
 | # | Session | What it covers |
 |---|---|---|
+| S00 | [Prompt Engineering Foundations](sessions/S00-prompt-engineering-foundations/handout.md) | A prompt as a specification, not a question; six reusable prompt patterns (Persona, Chain-of-Thought, Question Refinement, Few-Shot, Flipped Interaction, Semantic Filter + Recipe); naive-vs-patterned comparison; when a prompt-only workflow stops being enough |
 | S01 | [Verified Agent Loops](sessions/S01-verified-agent-loops/handout.md) | Model calls vs. tool execution vs. agent loops; harness engineering; independent verification; when *not* to use an agent |
 | S02 | [Structured Outputs and Model Selection](sessions/S02-structured-outputs-and-model-selection/handout.md) | Model vs. serving API vs. application; tokens, context, and cost; Pydantic contracts; schema validity vs. business correctness; task-first model comparison |
 
-S01 and S02 are both foundational and don't depend on each other — S01 goes deep on the
-agent loop/harness mechanism, S02 goes deep on trusting a single structured decision.
-Take them in either order.
+S00, S01, and S02 are all foundational and don't depend on each other. S00 stays entirely
+inside prompt-only workflows; S01 goes deep on the agent loop/harness mechanism; S02 goes
+deep on trusting a single structured decision. S00 is a natural starting point since it
+needs no code, but all three can be taken in any order.
 
 (More sessions land here as they're ready.)
 

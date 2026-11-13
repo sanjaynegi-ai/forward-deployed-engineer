@@ -6,12 +6,12 @@ session doesn't have to restate them.
 
 | Code | Name | Confirmed by |
 |---|---|---|
-| C1 | AI Engineering Fundamentals | S01 quiz, S01 interview-prep, S02 quiz, S02 interview-prep |
-| C2 | AI Solution Architecture | S02 quiz, S02 interview-prep |
+| C1 | AI Engineering Fundamentals | S00 quiz, S00 interview-prep, S01 quiz, S01 interview-prep, S02 quiz, S02 interview-prep |
+| C2 | AI Solution Architecture | S00 quiz, S00 interview-prep, S02 quiz, S02 interview-prep |
 | C3 | Integration Engineering | S01 quiz, S01 interview-prep, S02 quiz |
-| C4 | Evaluation, Reliability & Security | S01 quiz, S01 interview-prep, S02 quiz, S02 interview-prep |
+| C4 | Evaluation, Reliability & Security | S00 quiz, S00 interview-prep, S01 quiz, S01 interview-prep, S02 quiz, S02 interview-prep |
 | C5 | Deployment & Operations | S02 quiz, S02 interview-prep |
-| C6 | Customer-Facing Technical Delivery | S01 interview-prep ("preview"), S02 quiz, S02 interview-prep |
+| C6 | Customer-Facing Technical Delivery | S00 quiz, S00 interview-prep, S01 interview-prep ("preview"), S02 quiz, S02 interview-prep |
 
 These are question-level tags, not claims that a session certifies mastery of every facet
 of a competency — a single quiz question tagged C6, for instance, exercises customer
