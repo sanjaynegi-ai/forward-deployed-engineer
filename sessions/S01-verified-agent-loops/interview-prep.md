@@ -1,6 +1,6 @@
 # S01 Interview Preparation — From LLM Calls to Verified Agent Loops
 
-**Course:** AI-Focused Forward Deployed Engineering · Session 01 of 7  
+**Course:** AI-Focused Forward Deployed Engineering · Session 01  
 **Audience:** Experienced software professionals; Python/LLM experience not assumed  
 **Scenario:** Northstar Support Systems, a fictional customer with synthetic support tickets  
 **Competencies:** C1 AI Engineering Fundamentals (primary), C4 Evaluation/Reliability/Security (primary), C3 Integration Engineering (secondary). C2/C6 are touched only through decision-making scenarios.

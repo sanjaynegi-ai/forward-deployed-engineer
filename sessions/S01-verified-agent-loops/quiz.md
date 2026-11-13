@@ -1,6 +1,6 @@
 # S01 Learner Quiz — From LLM Calls to Verified Agent Loops
 
-**AI-Focused Forward Deployed Engineering · Session 01 of 7**  
+**AI-Focused Forward Deployed Engineering · Session 01**  
 **Scenario:** Northstar Support Systems (fictional); synthetic support-ticket triage  
 
 ## Purpose and administration
@@ -8,7 +8,7 @@
 This assessment checks whether you can reason about LLM integration, tool execution,
 bounded agent loops, harness controls, independent verification, and engineering trade-offs.
 
-- **Recommended use:** 20–25 minutes independently after class; 10–15 minutes for review.
+- **Suggested time:** 20–25 minutes for Part A and 10–15 minutes for self-review.
 - **Total:** 40 points, 14 questions. Partial credit is permitted where specified.
 - **Primary competencies:** C1 (AI Engineering Fundamentals), C4 (Evaluation, Reliability, Security). **Secondary:** C3 (Integration Engineering).
 - **Assumptions:** Categories are `billing`, `technical`, `account`, and `general`. Ticket data and tool responses are synthetic. `Loop Engineering` is a *course-defined teaching term*, not a universally standardized component.
@@ -238,7 +238,9 @@ A customer says, “Our tickets are misrouted; add an autonomous agent.” In **
 
 ## 🔍 Interpret your results
 
-**Suggested bands (formative, not certification thresholds):** 34–40 strong; 27–33 developing; 0–26 revisit relevant concepts. These are proposed instructional thresholds, not empirically validated cut scores.
+**Suggested self-assessment ranges (not certification thresholds):** 34–40 strong;
+27–33 developing; 0–26 revisit relevant concepts. These are not empirically validated
+cut scores.
 
 **Diagnose by concept:**
 - Q1, Q4, Q9: model/tool/loop semantics.
@@ -247,11 +249,6 @@ A customer says, “Our tickets are misrouted; add an autonomous agent.” In **
 - Q2, Q14: engineering judgment about whether agents are justified.
 - Q8: event-driven continuation.
 - Q13: uv workflow readiness.
-
-> [!TIP]
-> **Recommended debrief:** Ask learners to explain one wrong answer by tracing *which
-> component has authority*: model, application harness, tool, verifier, or customer
-> requirement. Invite one learner to defend a simpler non-agent design.
 
 **Coverage note:** This quiz assesses introductory Loop Engineering, not production-grade orchestration, durable workflows, or statistically robust evaluation design; those remain later-course topics.
 

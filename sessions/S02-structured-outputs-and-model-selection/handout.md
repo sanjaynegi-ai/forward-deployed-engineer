@@ -1,6 +1,6 @@
 # S02 Learner Handout — Structured Outputs and Choosing a Model
 
-**AI-Focused Forward Deployed Engineering · Session 02 of 7 · 90 minutes**
+**AI-Focused Forward Deployed Engineering · Session 02 · 90 minutes**
 **Case study:** Northstar Support Systems (fictional) · Comparing model configurations for ticket triage
 
 Northstar's support team already has a model that answers. The harder question is whether

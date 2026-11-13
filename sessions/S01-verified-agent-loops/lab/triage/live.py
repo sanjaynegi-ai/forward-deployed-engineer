@@ -1,4 +1,4 @@
-"""Optional live OpenAI-compatible adapter. Validate provider/tool support before class."""
+"""Optional live OpenAI-compatible adapter. Validate provider and tool support before use."""
 import json
 import os
 from .core import Decision

@@ -1,6 +1,6 @@
 # S02 Interview Preparation — Structured Outputs and Choosing a Model
 
-**Course:** AI-Focused Forward Deployed Engineering · Session 02 of 7
+**Course:** AI-Focused Forward Deployed Engineering · Session 02
 **Audience:** Experienced software engineers, QA automation engineers, architects, engineering managers, and technical product professionals. Python and ML proficiency are not assumed.
 **Scenario:** Northstar Support Systems, a fictional customer with synthetic support tickets
 **Competencies:** C1 AI Engineering Fundamentals (primary), C4 Evaluation/Reliability/Security (primary), C2 AI Solution Architecture (secondary). C3/C5/C6 are touched through integration, cost, and customer-delivery scenarios.
@@ -15,7 +15,6 @@ modes.
 - **15-minute screen:** Q1, Q4, Q8, plus one follow-up from each.
 - **30-minute technical interview:** Q2, Q5, Q9, Q11.
 - **45-minute FDE design interview:** Q3, Q7, Q10, Q13, Q15.
-- **Teaching practice:** Ask a candidate to explain Q1 or Q4 to a mixed group of senior engineers and engineering managers.
 
 **Rating rubric (per question)**
 
@@ -321,7 +320,7 @@ configurations on 60 labeled tickets. Assume the following illustrative results:
 
 ## E. ✅ Self-assessment scoring sheet
 
-| Dimension | Questions that provide evidence | What to listen for | Score (0–3) |
+| Dimension | Questions that provide evidence | Strong-answer indicators | Score (0–3) |
 |---|---|---|---|
 | Layer boundaries and terminology | Q1, Q2, Q6 | Clear ownership of model/API/application responsibilities | ___ |
 | Contract design and implementation | Q4, Q5, Q7 | Schema limits, meaningful tests, deterministic validation | ___ |
@@ -345,7 +344,7 @@ ratings are instructional heuristics, **not calibrated hiring cutoffs**.
 
 ## 🗺️ Bridge to S01
 
-Ask: **"If Northstar sometimes needs to look up an account, sometimes needs incident
+Consider: **"If Northstar sometimes needs to look up an account, sometimes needs incident
 status, and sometimes needs no lookup at all, how could the application decide what to do
 next?"**
 

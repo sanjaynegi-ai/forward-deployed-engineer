@@ -1,6 +1,6 @@
 # S01 Learner Handout — From LLM Calls to Verified Agent Loops
 
-**AI-Focused Forward Deployed Engineering · Session 01 of 7 · 90 minutes**  
+**AI-Focused Forward Deployed Engineering · Session 01 · 90 minutes**  
 **Case study:** Northstar Support Systems (fictional) · Support-ticket triage
 
 Northstar's tickets already get answered by a model. This session answers a harder
@@ -150,7 +150,7 @@ These checks verify **structure and explicit invariants**, not whether the categ
 | Model repeatedly calls the same tool | Detect repetition; stop or escalate |
 | Tool fails or times out | Record controlled error; retry only when safe and bounded |
 | Result passes JSON/schema checks but is factually wrong | Evaluate against evidence or reference labels; consider human review |
-| API or model tool support unavailable in class | Use a clearly labeled deterministic mock path |
+| API or model tool support unavailable | Use a clearly labeled deterministic mock path |
 
 > [!CAUTION]
 > Use **synthetic data only** for exercises. Never commit API keys or display real secrets.

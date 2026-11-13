@@ -1,6 +1,6 @@
 # S02 Learner Quiz — Structured Outputs and Choosing a Model
 
-**AI-Focused Forward Deployed Engineering · Session 02 of 7**
+**AI-Focused Forward Deployed Engineering · Session 02**
 **Scenario:** Northstar Support Systems (fictional); synthetic support-ticket triage
 
 ## Purpose and administration
@@ -11,7 +11,7 @@ provider-specific cost behavior; design and validate typed response contracts; r
 small-scale model comparison; and communicate quality/latency/cost trade-offs to a
 customer.
 
-- **Recommended use:** 30–40 minutes independently after class; can be assigned as homework.
+- **Suggested time:** 30–40 minutes for Part A, followed by self-review.
 - **Total:** 74 points, 15 questions. Partial credit is permitted where specified.
 - **Primary competencies:** C1 (AI Engineering Fundamentals), C4 (Evaluation, Reliability, Security). **Secondary:** C2 (AI Solution Architecture), C3 (Integration Engineering), C5 (Deployment & Operations), C6 (Customer-Facing Technical Delivery).
 - **Assumptions:** All Northstar support tickets are synthetic. Do not assume that model-generated explanations are faithful internal reasoning traces. Agent execution loops and harness implementation are **not** in scope here — see S01.
@@ -295,9 +295,9 @@ The solutions are included below for self-assessment. Finish Part A before conti
 | 15 | Advanced | C2 | Architecture | 6 |
 | **Total** | | | | **74** |
 
-**Scoring:** Award partial credit on open responses for technically correct reasoning. For
-Q11, award 2 points for each correct selection, with 0 for the question if any incorrect
-option is selected (or adjust the policy consistently before class).
+**Scoring:** Give yourself partial credit on open responses for technically correct
+reasoning. For Q11, use 2 points for each correct selection and 0 for the question if any
+incorrect option is selected.
 
 ### Q1 — C (2 points)
 **Explanation:** The application or its evaluation/business-validation components must
@@ -315,8 +315,8 @@ starting point.
 ### Q3 — Two concerns, 2 points each (4 points)
 **Strong answer examples:** Increased input cost and latency; irrelevant context burying
 useful information; access-control/data-exposure risks; truncation or remaining
-output-budget constraints; harder provenance and debugging. Reward any two distinct
-well-explained issues.
+output-budget constraints; harder provenance and debugging. Any two distinct,
+well-explained issues earn full credit.
 **Misconception:** "Fits in the context window" implies the material is relevant or safe to include.
 
 ### Q4 — C (2 points)
@@ -461,9 +461,9 @@ mechanics for that are covered in **S01: Verified Agent Loops** (3).
 
 ## 🔍 Interpret your results
 
-**Suggested bands (formative, not certification thresholds):** 63–74 strong; 50–62
-developing; 0–49 revisit relevant concepts. These are proposed instructional thresholds,
-not empirically validated cut scores.
+**Suggested self-assessment ranges (not certification thresholds):** 63–74 strong; 50–62
+developing; 0–49 revisit relevant concepts. These are not empirically validated cut
+scores.
 
 **Diagnose by concept:**
 - Q1, Q2, Q6: layer boundaries and terminology.
@@ -471,12 +471,6 @@ not empirically validated cut scores.
 - Q8, Q9: contract design and implementation.
 - Q7, Q10, Q12: evaluation rigor and small-sample risk.
 - Q13, Q14, Q15: customer-facing architecture decisions.
-
-> [!TIP]
-> **Recommended debrief:** Ask "Which metric would your customer reject even when overall
-> agreement looks strong?" and "Where is the authorization and fallback logic actually
-> implemented?" Invite one learner to defend keeping the fixed workflow instead of adding
-> an agent.
 
 **Coverage note:** This quiz assesses model/application separation, structured-output
 contracts, and task-first model comparison — not production-grade orchestration or
