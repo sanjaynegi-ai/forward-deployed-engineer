@@ -213,7 +213,7 @@ while True:
 request: ticket=T-104, account=A-17
 model: lookup_account(account=A-71)
 tool: returns A-71 billing status
-model: {"ticket_id":"T-104","category":"billing","priority":"normal"}
+model: {"ticket_id":"T-104","category":"billing","priority":"medium"}
 verifier: schema OK
 ```
 

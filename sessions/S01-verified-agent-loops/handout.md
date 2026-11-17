@@ -13,14 +13,14 @@ By the end of this session, you should be able to run a Python AI project with `
 
 ## 1. 🧩 Start with the business problem
 
-Northstar receives tickets that should be routed to **billing**, **technical**, **account**, or **general** support. Some tickets contain enough information to classify directly; others require a permitted lookup of synthetic account context.
+Northstar receives tickets that should be routed to **billing**, **technical**, **access**, or **general** support. Some tickets contain enough information to classify directly; others require a permitted lookup of synthetic account context.
 
 **Engineering decision:** Start with the simplest workable approach. Rules may be enough for predictable inputs; a single model call may handle ambiguous text; a tool-using loop is justified only when the task needs additional information or actions. An agent is not automatically better.
 
 Example *candidate* result (not yet verified):
 
 ```json
-{"ticket_id":"T-104","category":"billing","priority":"normal","requires_human_review":false}
+{"ticket_id":"T-104","category":"billing","priority":"medium","needs_human":false}
 ```
 
 ## 2. 🧩 Five essential concepts
@@ -70,6 +70,36 @@ flowchart TD
 > tool schema is not a security boundary. Actual SDK implementations also need to preserve
 > tool-call identifiers and associate each result with the corresponding request.
 
+### What "the application authorizes and executes it" actually means in code
+
+An agent framework is not magic — it's a **tool registry** (names mapped to callables)
+plus a **dispatcher** (the code that looks a name up, validates the arguments, checks
+authorization, executes, and returns an observation). In the smallest possible terms:
+
+```python
+tools = {"lookup_account": lookup_account}          # the registry
+
+def dispatch(name, args, state):                     # the dispatcher
+    if name not in tools: return {"error": "unknown tool"}
+    if not isinstance(args, dict): return {"error": "invalid arguments"}
+    if not authorized(name, args, state): return {"error": "not authorized"}
+    try:
+        return {"result": tools[name](**args)}
+    except Exception as exc:
+        return {"error": str(exc)}
+```
+
+`dispatch()` is this course's name for the pattern, not a name every framework uses —
+Part 5 of the companion notebook maps it onto LangGraph's actual `ToolNode`. What's
+universal is the five-step mechanism: lookup, validate, authorize, execute, observe —
+every one of them application code, none of them something the model does.
+
+> [!TIP]
+> **Build this yourself, from an ordinary Python function up to a full bounded loop:**
+> `lab/Tool_Calling_From_Scratch.ipynb` — an optional companion notebook, no API key
+> required for its required path, that builds exactly this progression with a weather
+> example before re-applying it to Northstar's `create_escalation` tool below.
+
 ## 3. 💻 Work in VS Code with uv
 
 The course's pre-course onboarding covers installation. In the starter project, use:
@@ -118,19 +148,19 @@ A production implementation also needs malformed-argument handling, tool timeout
 Consider this invalid model output:
 
 ```json
-{"ticket_id":"T-104","category":"refunds","priority":"normal"}
+{"ticket_id":"T-104","category":"refunds","priority":"medium"}
 ```
 
-It violates two clear constraints: `refunds` is not an allowed category, and `requires_human_review` is missing.
+It violates two clear constraints: `refunds` is not an allowed category, and `needs_human` is missing.
 
 ```python
 def verify(candidate: dict, expected_ticket_id: str) -> list[str]:
     errors = []
     if candidate.get("ticket_id") != expected_ticket_id:
         errors.append("ticket_id mismatch")
-    if candidate.get("category") not in {"billing", "technical", "account", "general"}:
+    if candidate.get("category") not in {"billing", "technical", "access", "general"}:
         errors.append("invalid category")
-    if not isinstance(candidate.get("requires_human_review"), bool):
+    if not isinstance(candidate.get("needs_human"), bool):
         errors.append("missing/invalid review flag")
     return errors
 ```
@@ -151,11 +181,58 @@ These checks verify **structure and explicit invariants**, not whether the categ
 | Tool fails or times out | Record controlled error; retry only when safe and bounded |
 | Result passes JSON/schema checks but is factually wrong | Evaluate against evidence or reference labels; consider human review |
 | API or model tool support unavailable | Use a clearly labeled deterministic mock path |
+| Duplicate escalation request for the same ticket, worded differently each time | Block by a *business* key (the ticket), not just by matching the exact tool call |
+| Well-formed arguments requesting an unsafe business action (e.g., escalating a standard-tier account) | Enforce business authorization separately from argument validity — a schema-valid call is not an authorized one |
+
+The lab's own `create_escalation` tool (a **write**, side-effecting action, unlike the
+read-only `lookup_account`) exercises both new rows directly: it's only authorized for a
+high-priority ticket on a premium-support account, and the harness blocks a second
+escalation for the same ticket even if the model's stated reason text differs the
+second time. See `tests/test_core.py`'s `test_duplicate_escalation_prevented` for the
+exact scenario, run and passing.
+
+## 🗺️ Where these concepts appear in real agent frameworks
+
+| This course's vocabulary | LangChain | LangGraph |
+|---|---|---|
+| Tool registry | A function passed to `tools=[...]` | Tools registered with a graph node |
+| Model's tool request | `response.tool_calls` (`name`, `args`, `id`) | Same `AIMessage.tool_calls` |
+| Dispatcher | The documented loop: look up by `name`, call `tool.invoke(call)` | `ToolNode` — a prebuilt node that runs the requested tools |
+| Tool-call-ID-matched observation | A `ToolMessage` with a matching `tool_call_id` | Same convention |
+| Authorization (this course's own addition — not built in) | Not provided; you still write this | `wrap_tool_call` hook, or your own node before `ToolNode` |
+
+**Verified current links** (checked live, not quoted from memory — one stale URL,
+`python.langchain.com/docs/concepts/tool_calling`, now permanently redirects, which is
+exactly the kind of drift to expect and re-check yourself later):
+[LangChain tool calling](https://docs.langchain.com/oss/python/langchain/models) ·
+[LangGraph `ToolNode`](https://reference.langchain.com/python/langgraph.prebuilt/tool_node/ToolNode) ·
+[`ToolNode` source](https://github.com/langchain-ai/langgraph/blob/main/libs/prebuilt/langgraph/prebuilt/tool_node.py).
+
+A framework gives you the registry-and-dispatcher scaffolding; it never gives you the
+authorization policy itself — that's still your job, in a framework or out of one. The
+companion notebook's Part 5 has the full mapping and an optional source-reading exercise.
 
 > [!CAUTION]
 > Use **synthetic data only** for exercises. Never commit API keys or display real secrets.
 > Provider privacy settings, pricing, and tool compatibility must be checked before using a
 > live endpoint.
+
+## 🛠️ Forward Deployed Engineer Decision Challenge
+
+**Customer scenario:** Northstar wants an AI workflow to retrieve account details and
+route tickets end to end, including billing disputes, with minimal engineering review —
+while Security/Compliance hasn't signed off on what account data it can touch.
+
+**Engineering decision:** Which tools are authorized and which are explicitly
+prohibited, what verification and retry/stop limits apply, what triggers human
+escalation, and whether a bounded tool loop is even the right scope yet.
+
+**Your deliverable:** A short workflow authorization-and-escalation design one-pager.
+~10–15 minutes. Do this **before** attempting the hands-on challenge below — it sets the
+policy that challenge's trace will test.
+
+**Full exercise, rubric, and worked examples:**
+[`docs/fde-exercises/verified-agent-loop-decision.md`](../../docs/fde-exercises/verified-agent-loop-decision.md)
 
 ## 7. 🛠️ Hands-on challenge
 
@@ -190,6 +267,28 @@ Inspect this trace:
 - [uv: CLI reference](https://docs.astral.sh/uv/reference/cli/) — command details.
 - [OpenAI: Function calling](https://platform.openai.com/docs/guides/function-calling) — tool request and execution concepts.
 - [OWASP: LLM application security](https://genai.owasp.org/) — prompt injection and tool-use risks.
+
+## 🗺️ What you have built, and what's next
+
+**What you have built:** a working bounded agent loop (`triage/core.py`) with **two**
+tools — the original read-only `lookup_account` and a new, side-effecting
+`create_escalation` — tool authorization, repeated-call detection, business-level
+duplicate-side-effect prevention, independent verification, bounded retry with
+feedback, and escalation on exhaustion — exercised by a passing 14-test suite, not just
+described. If you worked through the optional companion notebook, you also built a
+generic tool registry and dispatcher from first principles, before ever seeing
+`triage/core.py`'s version of the same mechanism.
+
+**What limitations remain:** the verifier checks structure, identity, and evidence
+provenance — not semantic classification accuracy. The mock model is a deterministic
+stand-in, not a real LLM. A production system still needs stronger authentication, PII
+handling, audit logging, and a real labeled evaluation set.
+
+**What the next session adds:** **S02: Structured Outputs and Model Selection** adds a
+typed decision contract and a model-comparison method for trusting *which* category or
+priority gets chosen — this session's verifier checks that a result is well-formed and
+authorized, not that the classification itself is correct. The two sessions don't
+depend on each other and can be taken in either order.
 
 ---
 

@@ -60,6 +60,25 @@ flowchart LR
 > faithful record of its internal computation — treat it as a user-facing string, not a
 > trace.
 
+## 🛠️ Forward Deployed Engineer Decision Challenge
+
+**Customer scenario:** two prototype scripts already disagree on Northstar's ticket
+taxonomy — Support says "account issues," Engineering says "access issues" for the same
+login/SSO problems, and the human-escalation field has three different names across the
+existing code.
+
+**Engineering decision:** agree on one canonical taxonomy that reconciles both
+stakeholders, define the typed contract for it, and define what makes a
+misclassification *critical* rather than just wrong.
+
+**Your deliverable:** an acceptance-criteria checklist — taxonomy table, contract
+sketch, critical-error definition, model recommendation with one caveat. ~10–15 minutes.
+Do this **before** reading the contract below — it already shows the agreed taxonomy, so
+deciding it yourself only works if you haven't seen the answer yet.
+
+**Full exercise, rubric, and worked examples:**
+[`docs/fde-exercises/structured-output-model-decision.md`](../../docs/fde-exercises/structured-output-model-decision.md)
+
 ## 3. 💻 Structured output: the API contract
 
 Imagine an internal support-triage service for **Northstar Support Systems**. A downstream
@@ -89,7 +108,7 @@ from typing import Literal
 from pydantic import BaseModel, Field, ValidationError
 
 class TicketDecision(BaseModel):
-    category: Literal["billing", "technical", "access", "other"]
+    category: Literal["billing", "technical", "access", "general"]
     priority: Literal["low", "medium", "high"]
     needs_human: bool
     summary: str = Field(min_length=1, max_length=240)
@@ -268,6 +287,21 @@ Instead:
 > [!NOTE]
 > External model IDs, provider support, prices, and caching rules change over time. Verify
 > them in the provider's current documentation before choosing a production configuration.
+
+## 🗺️ What you have built, and what's next
+
+**What you have built:** a validated `TicketDecision` contract, a working demonstration
+of a structure-valid-but-wrong decision, and a task-first, failure-aware comparison
+between two configurations — scored by critical-miss rate, not just aggregate accuracy.
+
+**What limitations remain:** the 8–12-ticket comparison teaches measurement mechanics,
+not production-grade statistical confidence. Nothing here chooses *when* the model
+should act autonomously versus defer to a tool-using loop — that's a separate decision.
+
+**What the next session adds:** **S01: Verified Agent Loops** adds the mechanism for
+when a single structured decision isn't enough — when the task needs a tool-using loop,
+a harness, and bounded retries around *multiple* model requests. The two sessions don't
+depend on each other and can be taken in either order.
 
 ---
 

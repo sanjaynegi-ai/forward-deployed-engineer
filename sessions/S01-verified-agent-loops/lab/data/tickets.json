@@ -13,5 +13,15 @@
     "ticket_id": "T-108",
     "message": "The app crashes when I sign in",
     "account_id": null
+  },
+  {
+    "ticket_id": "T-110",
+    "message": "Critical: our production integration is down and we need this escalated immediately",
+    "account_id": "A-417"
+  },
+  {
+    "ticket_id": "T-111",
+    "message": "Critical: our integration is down, please escalate immediately",
+    "account_id": "A-310"
   }
 ]

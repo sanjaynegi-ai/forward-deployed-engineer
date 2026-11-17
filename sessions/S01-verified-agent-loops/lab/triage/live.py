@@ -16,14 +16,20 @@ class LiveModel:
         self.client = OpenAI()
         self.model = os.environ["OPENAI_MODEL"]
     def decide(self, ticket, observations, feedback):
-        instructions = ("Classify support ticket into billing, technical, account, general. "
-          "Return final JSON with ticket_id, category, priority (normal/high), "
-          "requires_human_review (boolean), evidence_source (ticket/account_lookup). "
+        instructions = ("Classify support ticket into billing, technical, access, general. "
+          "Return final JSON with ticket_id, category, priority (low/medium/high), "
+          "needs_human (boolean), evidence_source (ticket/account_lookup). "
           "If ticket references account_id and no observations are available, request lookup_account. "
-          "Never invent account information. Only cite account_lookup after successful observation.")
+          "Never invent account information. Only cite account_lookup after successful observation. "
+          "If the ticket is high priority AND a successful lookup_account observation shows a premium "
+          "support_tier, you may request create_escalation once; never request it twice for the same "
+          "ticket, and never claim an account is premium without a successful lookup_account observation.")
         messages = [{"role":"system","content":instructions}, {"role":"user","content":json.dumps({"ticket":ticket,"observations":observations,"verification_feedback":feedback})}]
-        tool = {"type":"function","function":{"name":"lookup_account","description":"Read synthetic account context for this ticket only","parameters":{"type":"object","properties":{"account_id":{"type":"string"}},"required":["account_id"],"additionalProperties":False}}}
-        response = self.client.chat.completions.create(model=self.model,messages=messages,tools=[tool],tool_choice="auto",temperature=0)
+        tools = [
+            {"type":"function","function":{"name":"lookup_account","description":"Read synthetic account context for this ticket only","parameters":{"type":"object","properties":{"account_id":{"type":"string"}},"required":["account_id"],"additionalProperties":False}}},
+            {"type":"function","function":{"name":"create_escalation","description":"Escalate a high-priority ticket on a premium-support account; the application re-checks authorization independently of these arguments","parameters":{"type":"object","properties":{"ticket_id":{"type":"string"},"account_id":{"type":"string"},"reason":{"type":"string"}},"required":["ticket_id","account_id","reason"],"additionalProperties":False}}},
+        ]
+        response = self.client.chat.completions.create(model=self.model,messages=messages,tools=tools,tool_choice="auto",temperature=0)
         message = response.choices[0].message
         if message.tool_calls:
             call = message.tool_calls[0]

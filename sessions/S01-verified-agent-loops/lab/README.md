@@ -10,17 +10,41 @@
 4. Run `uv run python main.py --mode mock`.
 5. Run `uv run python main.py --mode mock --ticket T-101` to compare a single-call task.
 6. Run `uv run python main.py --mode mock --ticket T-101 --invalid-first` to see verifier feedback and retry.
-7. Run `uv run pytest` to execute the tests.
+7. Run `uv run python main.py --mode mock --ticket T-110` to see the two-tool escalation
+   path: `lookup_account` → `create_escalation` → final decision, on a premium account
+   with a high-priority ticket.
+8. Run `uv run python main.py --mode mock --ticket T-111` to see the same critical
+   wording **not** escalate, because the account is standard tier, not premium.
+9. Run `uv run pytest` to execute the tests (14, including six for `create_escalation`'s
+   authorization and duplicate-prevention behavior).
 
 `uv` may install the pinned Python 3.12 if not available; network access is required for initial environment setup. The mock application itself uses only the Python standard library.
 
 ## 🧩 Concept map
 
 - **Agent loop:** model decision -> permitted tool execution -> observation -> model decision -> independent verification -> accept or escalate.
-- **Harness:** tool allowlist, argument validation, ticket-scoped account lookup, step budget, repeated-call detection, structured trace.
+- **Registry and dispatcher:** `triage/core.py`'s tool allowlist and the branch inside
+  `run_agent` that looks a tool up by name, validates its arguments, authorizes it, and
+  executes it are a concrete instance of the registry/dispatcher pattern — see the
+  handout's new "what the application authorizes and executes it actually means in
+  code" section if you want the pattern named explicitly before reading the real code.
+- **Harness:** tool allowlist (now two tools: read-only `lookup_account` and
+  side-effecting `create_escalation`), argument validation, ticket-scoped account
+  lookup, step budget, repeated-call detection, business-level duplicate-side-effect
+  prevention, structured trace.
 - **Verification:** deterministic checks for fields, category, ticket identity, and evidence provenance. These checks **do not prove semantic correctness** of the category.
 - **Loop Engineering:** course-defined umbrella for feedback, bounded retries, event-driven continuation, and measured improvement. It is not a standardized industry component.
 - **Hill-climbing:** optional extension: compare a proposed improvement against a fixed labeled evaluation set; do not optimize against one anecdotal ticket.
+
+> [!NOTE]
+> **Optional companion notebook:** `Tool_Calling_From_Scratch.ipynb` builds the
+> registry/dispatcher/bounded-loop pattern from an ordinary Python function up, with a
+> weather example, before re-applying it to this lab's real `triage.core` tools —
+> including a live replay of the authorization-failure trace below and all eight
+> framework-safety failure modes, each actually executed. No fixed timebox; no API key
+> required for its required path (Parts 1–4). See
+> `docs/curriculum/tool-calling-from-scratch-teaching-guide.md` for suggested pacing if
+> run live.
 
 ## 🛠️ Checkpoints / exercises
 
@@ -37,6 +61,12 @@
 **Challenge B:** Add a fixture where an account is not found. Ensure the final answer does not claim account evidence and considers human review.
 
 **Challenge C:** Write a small labeled evaluation set and compare accuracy, tool count, and escalation rate between two policies.
+
+**04 — Escalation and duplicate-side-effect prevention:** use `--ticket T-110` (escalates)
+and `--ticket T-111` (does not — standard tier). Then read
+`tests/test_core.py::test_duplicate_escalation_prevented` and explain, in your own
+words, why exact-argument repeated-call detection alone would not have caught that
+specific scenario.
 
 ## 💻 Optional live model mode (requires credentials and provider validation)
 
@@ -70,7 +100,7 @@ The live adapter uses OpenAI-compatible Chat Completions. It is intentionally sm
 
 ## Scope / limitations
 
-This is an instructional prototype, not a production ticket router. The mock class uses hand-coded branching and is **not an LLM**. The verifier checks structural and evidence-provenance requirements, not ground-truth classification accuracy. A real system would add stronger authentication, PII handling, timeouts, audit logging, evaluation datasets, idempotency, monitoring, and human-review routing.
+This is an instructional prototype, not a production ticket router. The mock class uses hand-coded branching and is **not an LLM**. The verifier checks structural and evidence-provenance requirements, not ground-truth classification accuracy. `create_escalation`'s duplicate-side-effect check is scoped to one in-memory run of `run_agent` and keyed only on ticket ID — a real system would need this to be durable across process restarts (e.g., a database constraint or an idempotency-key table), not just an in-memory set. A real system would also add stronger authentication, PII handling, timeouts, audit logging, evaluation datasets, monitoring, and human-review routing.
 
 ---
 

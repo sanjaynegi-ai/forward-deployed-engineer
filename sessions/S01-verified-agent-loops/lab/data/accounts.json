@@ -1,10 +1,17 @@
 {
   "A-204": {
     "status": "active",
-    "billing_flag": "duplicate_charge_reported"
+    "billing_flag": "duplicate_charge_reported",
+    "support_tier": "premium"
   },
   "A-310": {
     "status": "suspended",
-    "billing_flag": "none"
+    "billing_flag": "none",
+    "support_tier": "standard"
+  },
+  "A-417": {
+    "status": "active",
+    "billing_flag": "none",
+    "support_tier": "premium"
   }
 }

@@ -181,6 +181,20 @@ most customers decide whether to fund the pipeline *based on* a result like this
 > decision," without building any of the verification S01 requires or the typed contract
 > S02 requires. Notice that crossing; don't let it happen by accident.
 
+## 🛠️ Forward Deployed Engineer Decision Challenge
+
+**Customer scenario:** Northstar leadership needs a believable churn/feedback read
+before authorizing a larger engagement — one week, two CSVs, no budget yet.
+
+**Engineering decision:** Which prompt pattern(s) actually fit this ask, and where does
+this prompt-only workflow stop being trustworthy enough to act on without further work?
+
+**Your deliverable:** A one-page pre-engagement readout memo — headline finding,
+evidence, one honest caveat, one concrete next step. ~10–15 minutes.
+
+**Full exercise, rubric, and worked examples:**
+[`docs/fde-exercises/prompt-engineering-decision.md`](../../docs/fde-exercises/prompt-engineering-decision.md)
+
 ## ✅ Check your understanding
 
 1. Which single pattern would you reach for first if a model's answers to the same kind of
@@ -208,6 +222,22 @@ most customers decide whether to fund the pipeline *based on* a result like this
 - [Julius.ai](https://julius.ai/) — a prompt-driven data-analysis tool; the lab's churn
   exercise is written so the same prompt you draft there is the one you'd paste into a tool
   like this.
+
+## 🗺️ What you have built, and what's next
+
+**What you have built:** six reusable prompt patterns, a naive-vs-few-shot comparison
+with real evidence of *which* comments each approach gets wrong, and a real,
+data-grounded churn/feedback readout — all without writing a line of application code.
+
+**What limitations remain:** no independent verification, no typed output contract, and
+no repeatable automation. This is a one-off, human-reviewed read, not a production
+decision system — and nothing here should run unattended on live customer data.
+
+**What the next session adds:** **S01: Verified Agent Loops** adds independent
+verification and a bounded agent loop, for when a task needs tool access and a stop
+condition. **S02: Structured Outputs and Model Selection** adds a typed contract and a
+model-comparison method, for when an output needs to drive an automated decision. Either
+can come next — neither depends on this session or on each other.
 
 ---
 

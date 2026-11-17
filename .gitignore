@@ -45,6 +45,18 @@ answer-keys/
 *runbook*.md
 *transcript*.md
 
+# Curriculum planning/architecture docs (blueprints, dependency maps, gap analyses,
+# teaching plans/guides, audits, change logs) -- mentor/architect-facing, not learner
+# material. Learner-usable content belongs in a session's own folder instead, not here.
+docs/curriculum/
+*teaching-guide*.md
+*teaching-plan*.md
+*change-log*.md
+*blueprint*.md
+*quality-review*.md
+*gap-analysis*.md
+*dependency-map*.md
+
 # Local exports and temporary files
 *.log
 *.tmp
