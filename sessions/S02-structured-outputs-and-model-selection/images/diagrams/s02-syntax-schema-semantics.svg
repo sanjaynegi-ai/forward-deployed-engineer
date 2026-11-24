@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 365" role="img" aria-label="Three levels of correctness">
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8Z" fill="#64748b"/></marker></defs>
+<rect width="840" height="365" rx="18" fill="#ffffff"/>
+<text x="420.0" y="36" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="bold" fill="#172033">Three levels of correctness</text>
+<text x="420.0" y="60" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#475569">Northstar example: an urgent access outage</text>
+<rect x="25" y="100" width="250" height="230" rx="12" fill="#2563eb" fill-opacity=".065" stroke="#2563eb" stroke-width="2"/>
+<text x="150.0" y="129" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" font-weight="bold" fill="#2563eb">1. Syntax</text>
+<text x="150.0" y="153" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#172033">Can I parse the JSON?</text>
+<text x="150.0" y="173" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#172033"></text>
+<text x="150.0" y="193" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#172033">{&quot;category&quot;:&quot;access&quot;</text>
+<text x="150.0" y="213" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#172033"></text>
+<text x="150.0" y="233" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#172033">Missing closing brace</text>
+<text x="150.0" y="253" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#172033">→ Invalid JSON</text>
+<rect x="295" y="100" width="250" height="230" rx="12" fill="#15803d" fill-opacity=".065" stroke="#15803d" stroke-width="2"/>
+<text x="420.0" y="129" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" font-weight="bold" fill="#15803d">2. Schema</text>
+<text x="420.0" y="153" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#172033">Does it match the contract?</text>
+<text x="420.0" y="173" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#172033"></text>
+<text x="420.0" y="193" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#172033">priority = &quot;urgent&quot;</text>
+<text x="420.0" y="213" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#172033">Other fields assumed valid</text>
+<text x="420.0" y="233" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#172033"></text>
+<text x="420.0" y="253" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#172033">→ Invalid allowed value</text>
+<rect x="565" y="100" width="250" height="230" rx="12" fill="#9333ea" fill-opacity=".065" stroke="#9333ea" stroke-width="2"/>
+<text x="690.0" y="129" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" font-weight="bold" fill="#9333ea">3. Semantics</text>
+<text x="690.0" y="153" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#172033">Is the decision right?</text>
+<text x="690.0" y="173" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#172033"></text>
+<text x="690.0" y="193" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#172033">priority = &quot;low&quot;</text>
+<text x="690.0" y="213" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#172033">Other fields assumed valid</text>
+<text x="690.0" y="233" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#172033"></text>
+<text x="690.0" y="253" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#172033">→ Potential business error</text>
+</svg>

@@ -1,141 +1,101 @@
 # S03 Learner Handout — LLM Fundamentals
 
-**AI-Focused Forward Deployed Engineering · Session 03 · 90 minutes**
-**Case study:** generic model mechanics, with one Northstar-framed FDE decision at the end
+**AI-Focused Forward Deployed Engineering · Session 03 · 90 minutes**  
+**Case study:** Model mechanics and Northstar Support Systems (fictional)
 
-S00, S01, and S02 deliberately treat "the model" as a black box: something that takes a
-prompt and returns text or a structured decision. That's the right abstraction for most
-FDE engineering decisions — but not all of them. When a customer asks "why does the same
-ticket cost more to classify some days than others," or "can we just stream the whole
-response instead of waiting," the answer lives one layer below that black box. This
-session opens the box just far enough to answer those questions with mechanism, not
-hand-waving, and no further than that.
+Why does the same type of support ticket sometimes cost more to classify? Does streaming make an LLM faster? Does a model learn from each request?
+
+To answer these questions, we need to understand what happens inside a model call — without becoming AI researchers.
 
 ## 🎯 What you will learn
 
-By the end of this session, you should be able to: explain tokenization and why a
-tokenizer is not an LLM; trace a prompt through model inference end to end; explain, at an
-intuitive level, what embeddings and logits are and how a next token gets selected;
-distinguish inference from training; explain why a context window is a budget, not
-memory; explain sampling and generation settings; compare streaming and non-streaming
-delivery; distinguish a core LLM from an inference runtime from a provider API; and
-connect each of those to a concrete engineering or customer-facing decision.
+- Trace text through tokenization, embeddings, logits and next-token selection.
+- Distinguish training from inference, and generation loops from agent loops.
+- Understand sampling, temperature, context windows and streaming.
+- Separate the LLM, inference runtime and provider API.
+- Make engineering decisions about token budgets, latency and cost.
 
-> [!NOTE]
-> This is a **mechanics** session, not an **orchestration** or **retrieval** session. It
-> does not build a tool-using agent (that's **S01: Verified Agent Loops**) and does not
-> build a retrieval pipeline (a future Context Engineering and RAG session will).
-> Everything here happens *inside one model response*.
+This session covers model mechanics, not agent orchestration or retrieval.
 
-## 1. 🧩 Tokens and tokenization
+## Pillar 1 — How does an LLM generate a response?
 
-A **token** is the unit of text a model actually reads — a whole word, a word fragment,
-punctuation, or whitespace, depending on the tokenizer. A **token ID** is the integer
-standing in for that token. A **tokenizer** is the text ⇄ ID conversion algorithm plus its
-learned vocabulary. **It is not the language model** — it cannot generate anything, only
-translate.
+## 1. Follow the journey of a prompt
 
-Think of a tokenizer the way you'd think of a serialization format: the agreed-upon
-encoding between "text a person reads" and "integers a neural network can compute with."
-Different models can ship different tokenizers, so identical text can become a different
-number of tokens depending on which model you ask.
+![Prompt-to-response lifecycle](images/diagrams/s03-prompt-to-response.svg)
+
+A model generates new tokens rather than reversing the input pipeline. The tokenizer converts between text and IDs; the model predicts which ID should come next.
+
+We will follow the stages in this diagram throughout the session.
+
+## 2. Tokens, token IDs and embeddings
+
+| Concept | Simple meaning |
+|---|---|
+| Token | A piece of text: a word, fragment, punctuation or whitespace |
+| Token ID | An integer identifying a token in the vocabulary |
+| Tokenizer | Converts text into token IDs and decodes IDs back into text |
+| Embedding | A learned numerical vector representing a token |
+
+![Tokens, token IDs and embeddings](images/diagrams/s03-token-id-embedding.svg)
+
+**Think of it as:** serialization followed by a dictionary lookup. The ID is a key, not a measure of importance. The embedding is the numerical data retrieved using that key.
+
+A tokenizer is not an LLM. It cannot independently predict meaningful next tokens.
+
+Try these with the tokenizer loaded in your lab:
 
 ```python
-tokenizer.encode("unbelievable!")       # 3+ tokens: word fragments, not one "word" token
-tokenizer.encode("Python is fun 🐍")     # emoji usually costs more tokens than it looks like
+tokenizer.encode("unbelievable!")
+tokenizer.encode("Python is fun 🐍")
 ```
 
-> [!TIP]
-> **⚙️ Engineering implication:** token counts, not word counts, drive both your
-> context-window budget and most providers' billing. "This ticket has 40 words" tells you
-> nothing reliable about what it costs to classify.
+Compare the token counts. Different tokenizers may split the same text differently.
 
-## 2. 🧩 Loading the LLM, and the full prompt-to-response path
+### Embedding shapes
 
-The tokenizer alone cannot answer anything — it has no trained weights. The **language
-model** is a neural network trained to predict the next token from context. A small
-teaching model (135M parameters) uses the same core mechanism as a flagship model many
-times its size: predict the next token from everything so far.
+For a prompt containing five tokens and a model with 576-dimensional embeddings:
 
-```mermaid
-flowchart TD
-    A[Your prompt] --> B[Chat formatting]
-    B --> C["Tokenizer: text to IDs"]
-    C --> D["Embedding lookup<br/>IDs to vectors"]
-    D --> E[Transformer layers]
-    E --> F["Output logits<br/>score per vocabulary token"]
-    F --> G[Select next token ID]
-    G --> H{Stop condition met?}
-    H -->|No, repeat| D
-    H -->|Yes| I["Tokenizer decode:<br/>IDs to text"]
-    I --> J[Response delivered]
+- Token IDs: `[1, 5]` — one prompt, five IDs.
+- Embeddings: `[1, 5, 576]` — five vectors, each containing 576 numbers.
 
-    classDef io fill:#2a78d6,color:#ffffff,stroke:#184f95
-    classDef model fill:#eb6834,color:#ffffff,stroke:#b84420
-    classDef decision fill:#fab219,color:#0b0b0b,stroke:#a8790f
+The embedding layer is inside the trained model; no separate embedding-service call is required.
 
-    class A,J io
-    class B,C,D,E,F,G,I model
-    class H decision
-```
+**Engineering takeaway:** Token counts, not word counts, determine context usage and often influence billing.
 
-> [!IMPORTANT]
-> The output is **not the input pipeline run backward.** The model produces **new**
-> vocabulary scores, picks a **new** token ID, and only then does the tokenizer decode
-> that ID into text. Tokenization and decoding are roughly inverse operations of each
-> other; the *whole generation process* is not.
+## 3. Transformer processing, logits and token selection
 
-**Two different uses of "loop," named once so neither gets confused later:** this
-session's loop is the **next-token generation loop inside one model response**. A
-separate, *outer* concept — an **agent loop** that makes several independent model
-requests and executes tools between them — is **S01: Verified Agent Loops**'s entire
-subject, not this session's. One model response can contain many next-token iterations
-and still be a single step of an agent loop, or the only step if there's no agent loop at
-all.
+The transformer layers process the numerical representations in context. The output projection then produces a score, called a **logit**, for every vocabulary token at the prediction position.
 
-## 3. 🧩 Embeddings — the intuition, without the math
+| Embeddings | Logits |
+|---|---|
+| Represent input tokens | Score possible next tokens |
+| One vector per token position | One score per vocabulary token at the prediction position |
+| Used to process information | Used to select what to generate |
 
-A token ID like `1234` is a label, not a magnitude — it does **not** mean that token is
-"bigger" or "more important" than token `1233`. The model needs numbers it can compute
-with, so it looks up a trained vector for every token ID. This **embedding layer** lives
-*inside* the generative model — there's no separate service call for it.
+Softmax converts logits into probabilities. A selection rule chooses the next token.
 
-If a prompt tokenizes to 5 tokens and the model uses 576-dimensional embeddings, the
-shapes read `[1, 5]` (one prompt, five IDs) → `[1, 5, 576]` (one prompt, **one vector per
-token**, 576 numbers each) — never one vector for the whole prompt.
+![Logits, probabilities, selection and temperature](images/diagrams/s03-logits-token-selection.svg)
 
-> [!TIP]
-> **⚙️ Engineering implication:** this is why "the model's context" is measured in
-> tokens, and why a longer prompt is strictly more compute, every time.
+The model is choosing a new token, not reconstructing the original input.
 
-## 4. 🧩 Logits and token selection
+**Important:** A generated explanation of the model's reasoning is itself model output. It is not guaranteed to be a faithful record of the internal computation. Evaluate it like any other generated text.
 
-After the transformer layers process the embedding vectors, a final **output
-projection** turns the result into one score — a **logit** — for *every* token in the
-vocabulary. A **softmax** turns those raw scores into a probability distribution; a
-selection rule (greedy, or sampling — §5) then picks one actual next token ID.
+## Pillar 2 — Why does the model behave this way?
 
-**Is this the reverse of §3?** No. Section 3 was `token ID → vector`. This is
-`vector → score for every possible next ID → pick one ID`. There's no step that
-reconstructs the *original* input — the model is choosing a **new** token.
+## 4. Training vs. inference
 
-> [!IMPORTANT]
-> **The single most important caution in this session:** when a model "explains its
-> reasoning" in generated text, that explanation was produced by this exact same
-> mechanism — next-token prediction over a vocabulary — not by inspecting its own
-> internal computation and reporting on it faithfully. A generated rationale is a
-> plausible-sounding **output**, evaluated the same way any other generated text is, not
-> a trustworthy trace of *why* the model produced its answer. This is the same caution
-> **S02** states about structured-output rationales, grounded here in the mechanism that
-> makes it true.
+![Training versus inference](images/diagrams/s03-training-vs-inference.svg)
 
-## 5. 🧩💻 Inference vs. training, and the generation loop
+- **Training:** adjusts model weights using data.
+- **Inference:** uses the trained weights to produce predictions. Ordinary inference does not update them.
 
-**Training** is the separate, offline, expensive process that adjusted this model's
-weights. **Inference** is using those already-fixed weights to make a prediction —
-nothing about the weights changes while an application runs. A call to
-`model.generate(...)` runs the repeated "predict one token, append it, repeat" process for
-you. Watching it unrolled by hand, one step at a time, makes that mechanism concrete:
+A small teaching model, such as SmolLM2-135M-Instruct, demonstrates the same basic autoregressive generation mechanism used by much larger language models.
+
+## 5. The next-token generation loop
+
+The model predicts the next token, appends it to the sequence and repeats until a stopping condition is reached.
+
+A simplified greedy loop (using the model, PyTorch and input IDs already loaded in the lab):
 
 ```python
 for step in range(12):
@@ -144,168 +104,162 @@ for step in range(12):
     current_ids = torch.cat([current_ids, next_id], dim=-1)
 ```
 
-Twelve iterations, one new token chosen each time, each decision made using *only* the
-tokens so far — including the ones this same loop just generated. Real inference engines
-cache earlier computations (the **KV cache**) so they don't redo the whole prefix every
-step; this is skipped here for clarity, not because it doesn't matter in production.
+This teaching sketch generates 12 tokens without checking for an early stop. `model.generate(...)` manages generation for you. Real inference runtimes also use a **KV cache** to reuse earlier computations rather than recomputing the entire prefix at every step.
 
-> [!IMPORTANT]
-> **⚙️ Engineering implication — generation loop vs. agent loop:**
-> - **The loop above:** many *next-token* iterations inside **one** model response. You
->   never write this loop yourself against a hosted API — the provider runs it and
->   returns (or streams) the finished text.
-> - **An agent loop** (S01's subject, not built here): the *outer* process that issues
->   several independent model **requests**, lets the model request a tool, executes that
->   tool in application code, and feeds the result back. Each step may itself contain a
->   full next-token loop like the one above. They're nested, not the same thing, and
->   conflating them is a common, costly confusion in production debugging.
+### Generation Loop vs. Agent Loop (S01)
 
-**Greedy** decoding always picks the highest-scoring token — deterministic. **Sampling**
-picks randomly, weighted by (temperature-adjusted) probabilities — not deterministic.
-**Temperature** reshapes those probabilities: lower is more predictable, higher is more
-varied (and can get worse, not just "more creative").
+![Generation loop inside an agent loop](images/diagrams/s03-generation-vs-agent-loop.svg)
 
-> [!TIP]
-> **⚙️ Engineering implication:** temperature is a **product decision**, not a
-> correctness knob. A classification task (S02's `TicketDecision`) usually wants greedy,
-> deterministic, repeatable output; a brainstorming task might reasonably want sampling.
-> Pick it from the task's actual need for repeatability, not a default.
+| | Generation Loop | Agent Loop |
+|---|---|---|
+| Purpose | Generate one response | Complete a larger task |
+| Iteration | Select and append a token | Model decision and possible application action |
+| Managed by | Inference runtime | Application or agent framework |
+| Stop | End token, output cap or configured stop | Completion, verification, budget or escalation |
 
-## 6. 🧩 Context window: what can the model see?
+**Think of it as:** an inner loop and an outer loop. One model request can contain many generation iterations. A single model call does not require an Agent Loop.
 
-A model's **context window** is the maximum number of tokens it can account for in one
-request — instructions, conversation history, supplied documents, and the tokens it's
-about to generate, all competing for the same budget. It's working memory for *this
-request only*, not a notebook the model keeps across requests. If an application wants a
-model to "remember" something from three turns ago, *the application* has to re-send it —
-nothing persists on the model's side between calls.
+## 6. Greedy decoding, sampling and temperature
 
-> [!IMPORTANT]
-> **⚙️ Engineering implication:** "the model has a huge context window" is not, by
-> itself, a reason to attach everything you have to every request. More tokens means more
-> cost and more latency, and irrelevant material can crowd out the signal that matters.
-> This is exactly the caution **S02** raises about attaching an entire knowledge base to
-> every ticket — you're now seeing *why* it's true, in tokens, not just as a rule to
-> follow.
+| Concept | What it does |
+|---|---|
+| Greedy decoding | Selects the highest-scoring next token |
+| Sampling | Randomly selects a token using a probability distribution |
+| Temperature | Changes how concentrated that distribution is |
 
-## 7. 🧩 Streaming vs. non-streaming: same generation, different delivery
+Lower temperature makes sampling more concentrated around high-scoring tokens. Higher temperature makes alternatives more likely. See the probability panels in Section 3.
 
-The model predicts tokens one at a time **regardless** of delivery mode.
+Greedy selection is deterministic for fixed scores and tie-breaking, but complete reproducibility across requests or environments is not guaranteed.
 
-- **Non-streaming:** the serving layer collects the whole result, then returns one
-  completed response. Your application typically displays it only after the call finishes.
-- **Streaming:** the serving layer sends chunks as they become available, so your
-  application can display text progressively.
+For Northstar ticket classification, repeatability may be valuable. Brainstorming may benefit from variety. Evaluate the available settings on the actual task (S02).
 
-Streaming is a UX and perceived-latency choice at the *delivery* layer — it does not
-change how many tokens get generated, how much compute it takes, or the total time until
-the last token exists.
+**Engineering takeaway:** Temperature is a product decision, not a correctness knob.
 
-> [!TIP]
-> **⚙️ Engineering implication:** choose streaming for its actual benefit —
-> **perceived** responsiveness in a user-facing chat UI — not because it changes total
-> compute. For a backend classification call like S01/S02's ticket triage, where nothing
-> is displayed token-by-token to a human, streaming usually buys you nothing.
+## 7. Context window — A budget, not memory
 
-## 8. 🧩 Three layers: LLM, inference runtime, and provider API
+The context window limits the tokens available to a model during inference. Instructions, conversation history, documents and generated tokens generally share this capacity, subject to provider-specific limits.
 
-```mermaid
-flowchart TB
-    A[Client / your application] -->|prompt + settings| B["Provider API<br/>auth, routing, rate limits"]
-    B --> C["Inference / serving runtime<br/>chat formatting, batching, scheduling"]
-    C --> D["Core LLM<br/>tokenizer, embeddings, transformer, logits, selection"]
-    D --> C
-    C --> B
-    B -->|complete or streamed response| A
+![Illustrative context-window budget](images/diagrams/s03-context-window.svg)
 
-    classDef io fill:#2a78d6,color:#ffffff,stroke:#184f95
-    classDef infra fill:#eb6834,color:#ffffff,stroke:#b84420
-    classDef core fill:#0ca30c,color:#ffffff,stroke:#076b07
+**Think of it as:** a limited processing buffer, not permanent storage.
 
-    class A io
-    class B,C infra
-    class D core
-```
+Relevant history must be made available for later requests, either by the application or by a provider-managed conversation service. Ordinary inference does not store conversation history in the model's weights.
 
-> [!NOTE]
-> This **nests inside S02's three-layer diagram** (`Northstar application →
-> model-serving API/gateway → LLM`), not a competing one. S02's "model-serving
-> API/gateway" box *is* the "provider API" + "inference runtime" boxes above, zoomed out
-> to decision-making depth. Same boundary, two levels of detail — pick the one the
-> question in front of you needs.
+Longer inputs generally increase resource usage and may increase cost and latency; caching and serving optimizations can affect the actual outcome. Irrelevant context may also reduce useful signal.
 
-A real provider may distribute these functions across different services and add
-monitoring, caching, safety checks, and GPU scheduling. `vLLM` is a real example of the
-"inference runtime" box — not an LLM, not a tokenizer, and not an agent.
+## Pillar 3 — How does this affect my application?
 
-When you call a hosted API, you never write the §5 generation loop, never touch the §3
-embedding layer, and never see §4's logits directly — the provider's inference runtime
-handles all of it. What you *can* usually control through API parameters: max output
-tokens, sampling settings, and streaming mode — the three things this session showed you
-the mechanism behind.
+## 8. LLM vs. inference runtime vs. provider API
 
-## 9. 🛠️ Why this matters for FDE work — Northstar's token/cost budget
+![S02 and S03 inference architecture](images/diagrams/s03-inference-architecture.svg)
 
-Northstar's support lead looked at last month's invoice and asked: *"Why does classifying
-the exact same kind of ticket cost different amounts depending on which agent submitted
-it?"* The honest answer is §1 and §6, applied: agents who paste in the full conversation
-history (or several related tickets) before asking for a classification are paying for
-every one of those extra tokens, every single call — not because the model is
-inconsistent, but because token count, not "ticket complexity," drives both cost and the
-context budget.
+| Component | Responsibility |
+|---|---|
+| Core LLM | Uses trained weights to compute predictions |
+| Inference runtime | Runs the model, manages generation, batching and scheduling |
+| Provider API | Exposes model access, authentication, routing and API controls |
+| AI application | Uses model responses within a business workflow |
+
+This is a more detailed view of S02's model-serving layer, not a competing architecture.
+
+`vLLM` is an example of an inference runtime, not an LLM or an agent. Tokenization, selection and decoding are supporting operations whose placement can vary by implementation.
+
+With hosted APIs, the runtime usually manages the generation loop. You typically control supported settings such as output limits, sampling and streaming. Raw logits are generally not exposed, although some APIs provide token log probabilities.
+
+## 9. Streaming vs. non-streaming
+
+![Streaming and non-streaming delivery](images/diagrams/s03-streaming-vs-non-streaming.svg)
+
+| Non-streaming | Streaming |
+|---|---|
+| Receive a completed response | Receive partial chunks progressively |
+| Simple backend consumption | Earlier visible feedback in a UI |
+| Suitable for ticket classification | Useful for interactive chat |
+
+**Think of it as:** a regular HTTP response versus a streamed HTTP response.
+
+Streaming changes delivery, not the basic generation mechanism. Chunks need not match individual tokens. It does not inherently reduce model compute or guarantee faster completion; actual end-to-end latency depends on implementation.
+
+For Northstar's backend classification, non-streaming is a reasonable starting point.
+
+## 10. Northstar — Why token budgets matter
+
+Northstar asks why similar tickets can have different classification costs. One possible reason: some requests include the entire conversation, while others contain just the current ticket.
+
+Illustrative prices: $1 per million input tokens and $4 per million output tokens. Assume 10,000 tickets per month and 60 output tokens per ticket.
+
+| | Short input | Full thread |
+|---|---:|---:|
+| Input tokens per ticket | 500 | 5,000 |
+| Cost per ticket | $0.00074 | $0.00524 |
+| Monthly token cost | $7.40 | $52.40 |
 
 ```python
-estimate_usd(input_tokens=short_ticket_tokens, output_tokens=60,
-             input_usd_per_m=1.00, output_usd_per_m=4.00)
-# vs. the same call with a full prior thread attached instead of just the ticket text
+def estimate_usd(input_tokens, output_tokens,
+                 input_usd_per_m, output_usd_per_m):
+    return (input_tokens * input_usd_per_m
+            + output_tokens * output_usd_per_m) / 1_000_000
+
+estimate_usd(500, 60, 1.00, 4.00)   # 0.00074
+estimate_usd(5000, 60, 1.00, 4.00)  # 0.00524
 ```
 
-A small per-call difference projected across 10,000 tickets a month turns into a real
-line item — the kind of number that actually moves a customer conversation.
+The difference is $45 per month at this illustrative volume. These are hypothetical prices and token counts, excluding retries, caching discounts and other charges.
 
-> [!IMPORTANT]
-> A convincing mechanism explanation is not, by itself, a policy. The moment you recommend
-> a specific context-trimming rule to Northstar (e.g., "attach the current ticket plus the
-> last N exchanges"), you're making an engineering trade-off on their behalf — name the
-> trade-off out loud (what you might lose by trimming), the same discipline S00 and S02
-> both ask for when a prompt or a model recommendation starts driving a real decision.
+**Engineering trade-off:** Trimming history may reduce cost but remove information needed for correct classification. Evaluate the impact before adopting a pruning policy.
 
 ## 🛠️ Forward Deployed Engineer Decision Challenge
 
-**Customer scenario:** Northstar wants to process 50,000 support tickets daily with
-predictable latency and spending, before approving the recurring monthly cost.
+**Customer scenario:** Northstar wants to process 50,000 tickets daily with predictable latency and spending.
 
-**Engineering decision:** token-related cost drivers, a context-budget policy, the
-latency implications of that budget, and a streaming-or-not recommendation — each with
-its risks and unknowns stated plainly.
+**Your deliverable:** A short production-configuration memo (10–15 minutes) covering:
 
-**Your deliverable:** a short production-configuration memo (context budget + pruning
-rule, output cap, streaming decision, cost range with stated assumptions, top risks).
-~10–15 minutes. This formalizes the exercise above into a full stakeholder brief — the
-optional `LLM_Engineering_Decisions.ipynb` companion notebook goes further for learners
-with more time.
+- Context budget and pruning rule, including what might be lost.
+- Output cap.
+- Streaming or non-streaming recommendation.
+- Estimated cost range with stated assumptions.
+- Latency implications, risks and unknowns.
 
-**Full exercise, rubric, and worked examples:**
-[`docs/fde-exercises/llm-fundamentals-decision.md`](../../docs/fde-exercises/llm-fundamentals-decision.md)
+Full exercise and rubric: [Decision challenge](../../docs/fde-exercises/llm-fundamentals-decision.md).
+
+Optional companion notebook: `LLM_Engineering_Decisions.ipynb`.
 
 ## ✅ Check your understanding
 
-1. Is a tokenizer an LLM? What's the one thing it actually does?
-2. Why isn't "the model generated an explanation of its reasoning" the same claim as "the
-   model reported its internal computation"?
-3. What's the difference between the next-token generation loop in this session and the
-   agent loop S01 teaches?
-4. Where does "memory" across five separate API calls actually have to live?
-5. Did streaming change how tokens are generated, or when your application receives them?
+1. How do a token, token ID and embedding differ?
+2. What is the difference between embeddings and logits?
+3. How do greedy decoding, sampling and temperature relate?
+4. How does a Generation Loop differ from an Agent Loop?
+5. Does ordinary inference change model weights?
+6. Why is a context window not persistent memory?
+7. What does the inference runtime do?
+8. Does streaming change generation or delivery?
+9. Why isn't a generated rationale a trustworthy trace of internal computation?
 
-> [!TIP]
-> **Expected takeaways:** a tokenizer only converts text ⇄ token IDs, nothing more;
-> generated "reasoning" is produced by the same next-token mechanism as any other output,
-> so it's not a readout of internal computation; this session's loop is next-token
-> iterations inside one model response, while an agent loop makes multiple independent
-> model requests and executes tools between them; memory across calls has to live in the
-> application, not the model; streaming changes when output is received, not the
-> underlying generation mechanism.
+<details>
+<summary>Suggested answers</summary>
+
+1. Text piece, numerical identifier and learned vector, respectively.
+2. Embeddings represent input tokens; logits score possible next tokens.
+3. Greedy chooses the top score; sampling draws from probabilities; temperature reshapes those probabilities.
+4. Generation repeats within a response; an Agent Loop coordinates model requests and actions.
+5. No.
+6. Relevant history must be supplied or managed by a conversation service.
+7. It manages model execution and generation efficiently.
+8. Delivery; the basic generation mechanism remains the same.
+9. It is generated output, not a guaranteed faithful record of internal computation.
+
+</details>
+
+## Session recap
+
+![How S01, S02 and S03 fit together](images/diagrams/s03-course-mental-model.svg)
+
+- **S03 — Model mechanics:** Understand how responses are generated and how settings affect application behavior.
+- **S02 — Structured Outputs and Model Selection:** Define contracts, validate responses and evaluate model suitability.
+- **S01 — Verified Agent Loops:** Control model-directed actions, feedback and stopping conditions.
+
+The sessions can be taken independently. This session establishes a mental model and a token-budget calculation; the companion lab demonstrates model mechanics. It does not implement retrieval, structured-output validation or agent orchestration.
 
 ## 📚 Further reading
 
@@ -314,23 +268,6 @@ with more time.
 - [Hugging Face generation documentation](https://huggingface.co/docs/transformers/main_classes/text_generation)
 - [OpenAI Chat Completions API](https://platform.openai.com/docs/api-reference/chat)
 - [vLLM documentation](https://docs.vllm.ai/)
-
-## 🗺️ What you have built, and what's next
-
-**What you have built:** a working mental model of the request/response lifecycle —
-tokens, embeddings, logits, the manual generation loop, context windows, and
-streaming — each grounded in a real, local demonstration, plus a Northstar cost-budget
-recommendation backed by actual token-count arithmetic.
-
-**What limitations remain:** this session only covers what happens inside *one* model
-response. Nothing here chooses *between* a tool-using loop and a single call, validates
-a structured decision, or retrieves supporting documents — those are separate decisions
-made elsewhere in this course.
-
-**What the next sessions add:** **S01: Verified Agent Loops** adds the mechanism for
-multiple model requests with tool execution and verification between them. **S02:
-Structured Outputs and Model Selection** adds a typed contract for trusting a single
-decision enough to automate it. Neither depends on this session or on each other.
 
 ---
 

@@ -1,126 +1,163 @@
-# S01 Learner Handout — From LLM Calls to Verified Agent Loops
+# S01 — From LLM Calls to Verified Agent Loops
 
-**AI-Focused Forward Deployed Engineering · Session 01 · 90 minutes**  
-**Case study:** Northstar Support Systems (fictional) · Support-ticket triage
+**AI-Focused Forward Deployed Engineering | Session 01 | 90 minutes**
 
-Northstar's tickets already get answered by a model. This session answers a harder
-question: who's allowed to act on that answer, when does the system get to try again, and
-when does it have to stop and ask a human instead?
+**Case study:** Northstar Support Systems (fictional) — Support-ticket triage
 
 ## 🎯 What you will learn
 
-By the end of this session, you should be able to run a Python AI project with `uv`, distinguish a model's tool request from actual tool execution, trace a bounded agent loop, identify the harness's responsibilities, verify an output independently of the model's claims, and decide when *not* to use an agent.
+- Understand when to use a model call versus an agent.
+- Distinguish Agent Loop, Harness Engineering and Loop Engineering.
+- Understand how models request tools and applications execute them.
+- Build a bounded agent loop and verify its outputs.
+- Handle failures, retries and human escalation.
+- Run a Python AI project using `uv`.
 
-## 1. 🧩 Start with the business problem
+## 1. Start with the business problem
 
-Northstar receives tickets that should be routed to **billing**, **technical**, **access**, or **general** support. Some tickets contain enough information to classify directly; others require a permitted lookup of synthetic account context.
+Northstar receives support tickets that need to be routed to billing, technical, access or general support. Some tickets are easy to classify. Others require additional account information.
 
-**Engineering decision:** Start with the simplest workable approach. Rules may be enough for predictable inputs; a single model call may handle ambiguous text; a tool-using loop is justified only when the task needs additional information or actions. An agent is not automatically better.
+Which approach would you choose?
 
-Example *candidate* result (not yet verified):
+| Approach | When to use it |
+|---|---|
+| Rules | Conditions are predictable. |
+| Single LLM call | Understanding the ticket requires interpreting natural language. |
+| Agent loop | Additional information or actions are needed before reaching a decision. |
+
+**Engineering principle:** Start with the simplest solution that works. Not every AI application needs an agent.
+
+A proposed ticket classification:
 
 ```json
 {"ticket_id":"T-104","category":"billing","priority":"medium","needs_human":false}
 ```
 
-## 2. 🧩 Five essential concepts
+The model has proposed a result. But should the application trust it?
 
-| Concept | Meaning | Engineering question |
-|---|---|---|
-| **Model call** | Send context/instructions to a model and receive a response | What did the model propose? |
-| **Agent loop** | Repeatedly request decisions, execute authorized tools, incorporate observations, and stop | What happens next, and when do we stop? |
-| **Harness Engineering** | Design the software surrounding model execution: tools, state, permissions, limits, logging, and recovery | What can the agent safely do? |
-| **Verification** | Independently check a proposed result against explicit criteria | Is the result acceptable? |
-| **Loop Engineering** | Our course's teaching term for deliberately designing feedback, continuation, retries, stopping, and iterative improvement | How does the process react and improve? |
+## 2. Understanding the core concepts
 
-*Loop Engineering* is a course-defined perspective, not a universally standardized software component. It connects the agent loop, harness, and verification policy.
+### Model Call
 
-### The core control flow
+Send instructions and information to an AI model and receive a response.
 
-```mermaid
-flowchart TD
-    A[Ticket and goal] --> B[Model proposes response or tool request]
-    B --> C{Tool requested?}
-    C -->|Yes| D[Application validates and authorizes request]
-    D --> E[Execute permitted tool]
-    E --> F[Return observation to conversation]
-    F --> B
-    C -->|No| G[Independent verifier]
-    G --> H{Acceptable?}
-    H -->|Yes| I[Accept result]
-    H -->|No, budget remains| J[Provide specific feedback]
-    J --> B
-    H -->|No, budget exhausted| K[Abstain or escalate]
+**Think of it as:** An API request-response interaction, except the generated answer is not necessarily correct.
 
-    classDef model fill:#2a78d6,color:#ffffff,stroke:#184f95
-    classDef action fill:#eb6834,color:#ffffff,stroke:#b84420
-    classDef success fill:#0ca30c,color:#ffffff,stroke:#076b07
-    classDef failure fill:#d03b3b,color:#ffffff,stroke:#8f2626
-    classDef pending fill:#fab219,color:#0b0b0b,stroke:#a8790f
+In Northstar, we send a ticket to the model and ask it to suggest a category.
 
-    class B,C model
-    class D,E,F,G,H action
-    class I success
-    class J pending
-    class K failure
-```
+### Agent Loop, Harness Engineering and Loop Engineering
 
-> [!IMPORTANT]
-> The model can *request* a tool call; the application must authorize and execute it. A
-> tool schema is not a security boundary. Actual SDK implementations also need to preserve
-> tool-call identifiers and associate each result with the corresponding request.
+These three concepts are closely related, but they are not the same.
 
-### What "the application authorizes and executes it" actually means in code
+![Agent Loop, Harness Engineering and Loop Engineering](images/diagrams/agent-loop-harness-loop-engineering.svg)
 
-An agent framework is not magic — it's a **tool registry** (names mapped to callables)
-plus a **dispatcher** (the code that looks a name up, validates the arguments, checks
-authorization, executes, and returns an observation). In the smallest possible terms:
+*Three perspectives of the same AI system, not three separate software components.*
+
+### 🔵 Agent Loop — The execution mechanism
+
+A cycle in which the model makes a decision, the application performs an authorized action if needed, and the model receives the result to decide what happens next.
+
+**Think of it as:** A software workflow that repeats until it reaches a stopping condition.
+
+In Northstar:
+
+- The model reads a ticket and requests account information.
+- The application retrieves the permitted information.
+- The model uses it to make its next decision.
+
+**Focus: How the agent executes.**
+
+### 🟢 Harness Engineering — Making execution reliable
+
+Building the software around the model and its execution loop. The harness manages:
+
+- Tools and their execution.
+- Permissions and authorization.
+- Conversation state.
+- Execution limits, error handling and logging.
+
+**Think of it as:** The application runtime and control infrastructure surrounding the model.
+
+In Northstar, the harness prevents unauthorized access to another customer's account details.
+
+**Focus: How we make execution safe, controlled and reliable.**
+
+### 🟣 Loop Engineering — Designing execution behavior
+
+Designing how the execution loop responds to feedback:
+
+- When to continue or retry.
+- What feedback to provide.
+- When to stop or escalate.
+- How to improve the workflow over time.
+
+**Think of it as:** Designing the feedback and retry policies of a software workflow.
+
+In Northstar, if the model returns an invalid category, we decide whether to provide corrective feedback, retry or escalate.
+
+**Focus: How we design feedback, continuation and improvement.**
+
+*Loop Engineering is a teaching term used in this course, not a universally standardized engineering discipline.*
+
+### Remember the difference
+
+| | Agent Loop | Harness Engineering | Loop Engineering |
+|---|---|---|---|
+| Primary focus | Execution | Control | Feedback and behavior |
+| Key question | What happens next? | Is it safe and permitted? | Should we continue, retry or stop? |
+| Northstar example | Request account details | Authorize the request | Decide what to do after receiving the result |
+
+The concepts intentionally overlap.
+
+**Loop Engineering designs the retry policy; the harness implements and enforces it; the Agent Loop executes according to it.**
+
+## 3. Tool Calling — How models interact with applications
+
+A model cannot directly execute your Python functions. It requests that your application execute them.
+
+For example, the model may request `lookup_account(account_id="A-104")`.
+
+![Tool calling flow](images/diagrams/tool-calling-flow.svg)
+
+### Tool Registry and Dispatcher
+
+| Concept | Meaning |
+|---|---|
+| Tool Registry | A collection of functions available to the model. |
+| Dispatcher | Application code that validates, authorizes and executes requests. |
+| Observation | The result returned after executing a tool. |
 
 ```python
-tools = {"lookup_account": lookup_account}          # the registry
+tools = {"lookup_account": lookup_account}
 
-def dispatch(name, args, state):                     # the dispatcher
-    if name not in tools: return {"error": "unknown tool"}
-    if not isinstance(args, dict): return {"error": "invalid arguments"}
-    if not authorized(name, args, state): return {"error": "not authorized"}
+def dispatch(name, args, state):
+    if name not in tools:
+        return {"error": "unknown tool"}
+    if not isinstance(args, dict):
+        return {"error": "invalid arguments"}
+    if not authorized(name, args, state):
+        return {"error": "not authorized"}
     try:
         return {"result": tools[name](**args)}
     except Exception as exc:
         return {"error": str(exc)}
 ```
 
-`dispatch()` is this course's name for the pattern, not a name every framework uses —
-Part 5 of the companion notebook maps it onto LangGraph's actual `ToolNode`. What's
-universal is the five-step mechanism: lookup, validate, authorize, execute, observe —
-every one of them application code, none of them something the model does.
+This is a conceptual example with basic argument checking, not complete argument validation or production-ready error handling. A tool schema is not a security boundary.
 
-> [!TIP]
-> **Build this yourself, from an ordinary Python function up to a full bounded loop:**
-> `lab/Tool_Calling_From_Scratch.ipynb` — an optional companion notebook, no API key
-> required for its required path, that builds exactly this progression with a weather
-> example before re-applying it to Northstar's `create_escalation` tool below.
+**Harness Engineering:** We are building the mechanism that controls tool execution.
 
-## 3. 💻 Work in VS Code with uv
+Real SDK implementations must also match each tool result to its tool-call ID.
 
-The course's pre-course onboarding covers installation. In the starter project, use:
+**Key takeaway:** The model requests. The application authorizes and executes.
 
-| Command | What it does |
-|---|---|
-| `uv --version` | Confirm uv is available |
-| `uv init northstar-triage` | Initialize a new project (when starting from scratch) |
-| `uv python pin 3.12` | Select a project Python version |
-| `uv add openai python-dotenv` | Add dependencies when needed |
-| `uv add --dev pytest` | Add pytest as a development dependency |
-| `uv sync` | Synchronize environment from project metadata/lockfile |
-| `uv run python main.py --mode mock` | Run the **planned starter-lab interface** using the managed environment |
-| `uv run pytest` | Execute tests once provided |
-| `uv tree` | Inspect dependency relationships |
+Optional companion notebook: `lab/Tool_Calling_From_Scratch.ipynb`
 
-**Project files:** `pyproject.toml` declares dependencies; `uv.lock` records resolved versions; `.venv/` is the local environment. Commit the lockfile for a reproducible application; do not commit `.venv/` or `.env` secrets. The `--mode mock` argument is part of our **planned lab application**, not a built-in uv option. A mock response is simulated, not a real model call.
+## 4. Building a bounded Agent Loop
 
-## 4. 💻 Build a bounded agent loop
+When a single model call is not sufficient, the model can receive additional information and make another decision. But this process cannot continue indefinitely.
 
-A conceptual sketch (not a drop-in SDK implementation):
+![Bounded agent loop with harness controls and loop policy](images/diagrams/bounded-agent-loop.svg)
 
 ```python
 for step in range(max_steps):
@@ -141,102 +178,155 @@ for step in range(max_steps):
 return {"status": "needs_review", "reason": "step budget exhausted"}
 ```
 
-A production implementation also needs malformed-argument handling, tool timeouts, repeated-call detection, retry budgets, exception paths, and appropriately redacted telemetry. A maximum-step limit prevents unbounded looping; it does **not** guarantee correctness.
+This is conceptual code, not a complete SDK implementation. A denied request must never reach tool execution.
 
-## 5. 🧩 Verify, then decide what happens next
+### Where do our three concepts appear?
 
-Consider this invalid model output:
+| Code or behavior | Concept |
+|---|---|
+| Repeated model calls | Agent Loop |
+| Tool authorization and execution | Harness Engineering |
+| Managing conversation state | Harness Engineering |
+| Designing the maximum-step policy | Loop Engineering |
+| Enforcing the step limit | Harness Engineering |
+| Designing corrective feedback and escalation | Loop Engineering |
+
+Production code must also handle tool failures, timeouts, repeated requests, malformed arguments and safe logging.
+
+**Key takeaway:** A bounded loop prevents endless execution. It does not guarantee correctness.
+
+## 5. Verification — Can we trust the result?
+
+Consider this proposed Northstar result:
 
 ```json
 {"ticket_id":"T-104","category":"refunds","priority":"medium"}
 ```
 
-It violates two clear constraints: `refunds` is not an allowed category, and `needs_human` is missing.
+Two problems:
+
+- `refunds` is not an allowed category.
+- The `needs_human` field is missing.
+
+The application should reject it.
 
 ```python
-def verify(candidate: dict, expected_ticket_id: str) -> list[str]:
+def verify(candidate, expected_ticket_id):
     errors = []
     if candidate.get("ticket_id") != expected_ticket_id:
         errors.append("ticket_id mismatch")
-    if candidate.get("category") not in {"billing", "technical", "access", "general"}:
+    if candidate.get("category") not in {
+        "billing", "technical", "access", "general"
+    }:
         errors.append("invalid category")
     if not isinstance(candidate.get("needs_human"), bool):
         errors.append("missing/invalid review flag")
     return errors
 ```
 
-These checks verify **structure and explicit invariants**, not whether the category is semantically correct. For semantic quality, use reference-labeled tickets, evidence checks, representative evaluations, and human review when appropriate. Model-stated confidence is not independent evidence.
+This example checks selected requirements, not the complete output contract.
 
-**Event-driven continuation:** A tool result arriving or a verifier returning a specific failure is an event that can justify the next step. This does not require a distributed event bus.
+**Think of it as:** Acceptance tests for a model-generated result.
 
-**Introductory hill-climbing:** Measure a baseline against a defined test set; make one targeted change (for example, improve the classification instructions); measure again; keep the change only if it improves the chosen objective without violating constraints. Beware noisy small samples and optimizing a metric that does not reflect customer outcomes.
-
-## 6. 🔍 Security and failure modes
-
-| Failure | Appropriate response |
+| Structural correctness | Semantic correctness |
 |---|---|
-| Model asks to look up another customer's account | Deny at tool authorization; do not rely on final-output verification |
-| Model returns an out-of-enum category | Reject and return specific feedback within a retry budget |
-| Model repeatedly calls the same tool | Detect repetition; stop or escalate |
-| Tool fails or times out | Record controlled error; retry only when safe and bounded |
-| Result passes JSON/schema checks but is factually wrong | Evaluate against evidence or reference labels; consider human review |
-| API or model tool support unavailable | Use a clearly labeled deterministic mock path |
-| Duplicate escalation request for the same ticket, worded differently each time | Block by a *business* key (the ticket), not just by matching the exact tool call |
-| Well-formed arguments requesting an unsafe business action (e.g., escalating a standard-tier account) | Enforce business authorization separately from argument validity — a schema-valid call is not an authorized one |
+| Is the output in the expected format? | Is the answer actually correct? |
+| Are required fields present? | Is the ticket routed to the right team? |
+| Are values allowed? | Does the evidence support the decision? |
 
-The lab's own `create_escalation` tool (a **write**, side-effecting action, unlike the
-read-only `lookup_account`) exercises both new rows directly: it's only authorized for a
-high-priority ticket on a premium-support account, and the harness blocks a second
-escalation for the same ticket even if the model's stated reason text differs the
-second time. See `tests/test_core.py`'s `test_duplicate_escalation_prevented` for the
-exact scenario, run and passing.
+An output can pass structural checks and still be wrong. Semantic quality requires reference-labeled tickets, evidence checks, evaluations or human review. Model-stated confidence is not independent evidence.
 
-## 🗺️ Where these concepts appear in real agent frameworks
+- **Harness Engineering:** Implements and runs verification.
+- **Loop Engineering:** Designs what happens when verification succeeds or fails.
+- **Agent Loop:** Executes the next step according to that decision.
 
-| This course's vocabulary | LangChain | LangGraph |
+## 6. Loop Engineering — Feedback and improvement
+
+Loop Engineering operates at two levels in this course.
+
+![Feedback during execution and improvement across executions](images/diagrams/loop-engineering-feedback.svg)
+
+### Event-driven continuation
+
+An event determines what the loop should do next.
+
+| Event | Next action |
+|---|---|
+| Account details received | Ask the model to continue. |
+| Verification failed | Provide feedback and retry if permitted. |
+| Verification passed | Accept the result. |
+| Step budget exhausted | Stop and escalate. |
+
+**Think of it as:** An event handler. This does not require a distributed event bus.
+
+### Hill-climbing — Improving over time
+
+For Northstar:
+
+1. Measure classification quality using a test set.
+2. Make one targeted change to the model instructions.
+3. Measure quality again.
+4. Keep the change if results improve without violating constraints.
+
+**Think of it as:** Performance tuning — measure, change, measure again.
+
+Avoid drawing conclusions from very small test samples or optimizing metrics unrelated to customer outcomes.
+
+## 7. Security and failure handling
+
+The harness must enforce business and security rules independently of the model.
+
+| Failure scenario | Appropriate response |
+|---|---|
+| Model requests another customer's details | Deny access before tool execution. |
+| Model returns an invalid category | Reject and provide feedback within limits. |
+| Model repeatedly requests the same tool | Detect repetition; stop or escalate. |
+| Tool fails or times out | Retry only when safe and bounded. |
+| Valid JSON contains an incorrect classification | Check evidence or request human review. |
+| Model API is unavailable | Use a clearly labeled mock. |
+| Model requests duplicate escalations | Prevent duplicate business actions. |
+| Model requests an unauthorized escalation | Deny the action. |
+
+### Read versus write operations
+
+| Tool | Purpose | Operation |
 |---|---|---|
-| Tool registry | A function passed to `tools=[...]` | Tools registered with a graph node |
-| Model's tool request | `response.tool_calls` (`name`, `args`, `id`) | Same `AIMessage.tool_calls` |
-| Dispatcher | The documented loop: look up by `name`, call `tool.invoke(call)` | `ToolNode` — a prebuilt node that runs the requested tools |
-| Tool-call-ID-matched observation | A `ToolMessage` with a matching `tool_call_id` | Same convention |
-| Authorization (this course's own addition — not built in) | Not provided; you still write this | `wrap_tool_call` hook, or your own node before `ToolNode` |
+| `lookup_account` | Retrieve account details | Read |
+| `create_escalation` | Create an escalation | Write |
 
-**Verified current links** (checked live, not quoted from memory — one stale URL,
-`python.langchain.com/docs/concepts/tool_calling`, now permanently redirects, which is
-exactly the kind of drift to expect and re-check yourself later):
-[LangChain tool calling](https://docs.langchain.com/oss/python/langchain/models) ·
-[LangGraph `ToolNode`](https://reference.langchain.com/python/langgraph.prebuilt/tool_node/ToolNode) ·
-[`ToolNode` source](https://github.com/langchain-ai/langgraph/blob/main/libs/prebuilt/langgraph/prebuilt/tool_node.py).
+Creating an escalation changes the business system. The harness must ensure:
 
-A framework gives you the registry-and-dispatcher scaffolding; it never gives you the
-authorization policy itself — that's still your job, in a framework or out of one. The
-companion notebook's Part 5 has the full mapping and an optional source-reading exercise.
+- The ticket is high priority.
+- The customer has premium support.
+- An escalation has not already been created for the ticket.
 
-> [!CAUTION]
-> Use **synthetic data only** for exercises. Never commit API keys or display real secrets.
-> Provider privacy settings, pricing, and tool compatibility must be checked before using a
-> live endpoint.
+**Think of duplicate prevention as:** Business-level idempotency. Even if the model changes its reason, a second escalation for the same ticket must be blocked.
 
-## 🛠️ Forward Deployed Engineer Decision Challenge
+**Key takeaway:** Valid arguments do not mean an authorized business action.
 
-**Customer scenario:** Northstar wants an AI workflow to retrieve account details and
-route tickets end to end, including billing disputes, with minimal engineering review —
-while Security/Compliance hasn't signed off on what account data it can touch.
+Use synthetic data only. Never expose real customer details or API keys. Check provider privacy settings, pricing and tool compatibility before using a live endpoint.
 
-**Engineering decision:** Which tools are authorized and which are explicitly
-prohibited, what verification and retry/stop limits apply, what triggers human
-escalation, and whether a bounded tool loop is even the right scope yet.
+## 8. Forward Deployed Engineer — Decision Challenge
 
-**Your deliverable:** A short workflow authorization-and-escalation design one-pager.
-~10–15 minutes. Do this **before** attempting the hands-on challenge below — it sets the
-policy that challenge's trace will test.
+Northstar wants AI to retrieve account information and route tickets, including billing disputes, with minimal engineering review. Security and Compliance has not approved which account data the workflow can access.
 
-**Full exercise, rubric, and worked examples:**
-[`docs/fde-exercises/verified-agent-loop-decision.md`](../../docs/fde-exercises/verified-agent-loop-decision.md)
+Design a short workflow authorization and escalation plan:
 
-## 7. 🛠️ Hands-on challenge
+- Is an agent loop actually required?
+- Which tools should be allowed or prohibited?
+- What should the verifier check?
+- When should the workflow retry or stop?
+- When should a human intervene?
 
-Inspect this trace:
+**Deliverable:** A one-page design. **Duration:** 10–15 minutes.
+
+Complete this before the hands-on challenge.
+
+Full exercise and rubric: [`docs/fde-exercises/verified-agent-loop-decision.md`](../../docs/fde-exercises/verified-agent-loop-decision.md)
+
+## 9. Hands-on challenge
+
+Review this execution trace:
 
 ```text
 1. Ticket T-104 arrives for account A-104.
@@ -246,49 +336,115 @@ Inspect this trace:
 5. Application accepts the result.
 ```
 
-**Your task:** Identify (a) the authorization failure, (b) the verification failure, (c) the safe next action, and (d) one test that would catch each problem. Explain why correcting the final category would **not** undo an earlier unauthorized disclosure.
+Identify:
 
-### ✅ Quick knowledge check
+1. Where did the Agent Loop execute?
+2. Where did Harness Engineering fail?
+3. What should independent verification have rejected?
+4. What should the Loop Engineering policy have decided?
+5. Which tests would catch these failures?
+6. Would correcting the final category undo the unauthorized disclosure?
 
-1. Does a model-generated tool call mean the tool has executed?
-2. Can valid JSON still be wrong?
-3. What stops a failed agent from retrying forever?
-4. When might a single LLM call be preferable to an agent loop?
-5. How does a verifier differ from the model evaluating its own answer?
+## 10. Quick knowledge check
 
-> [!TIP]
-> **Expected takeaways:** The model proposes; application code authorizes and acts;
-> verification checks explicit criteria; bounded feedback determines whether to accept,
-> retry, abstain, or escalate.
+1. Does a model-generated tool request mean the tool has executed?
+2. Can structurally valid JSON still be incorrect?
+3. What prevents an agent from retrying forever?
+4. When is a single model call preferable to an agent?
+5. How is independent verification different from the model evaluating itself?
+6. Who designs, enforces and executes the retry policy?
+
+<details>
+<summary>Reveal answers</summary>
+
+1. No. The application must authorize and execute it.
+2. Yes. Structural validity does not guarantee semantic correctness.
+3. A bounded execution policy enforced by the harness.
+4. When the task can be completed without additional information or actions.
+5. It checks the result against independently defined requirements or evidence.
+6. Loop Engineering designs it, the harness enforces it, and the Agent Loop executes according to it.
+
+</details>
+
+## 11. Lab reference — VS Code and uv
+
+`uv` helps manage Python projects, dependencies and environments. Installation is covered in pre-course onboarding.
+
+| Command | Purpose |
+|---|---|
+| `uv --version` | Check installation |
+| `uv init northstar-triage` | Create a new project from scratch |
+| `uv python pin 3.12` | Select Python version |
+| `uv add openai python-dotenv` | Add dependencies |
+| `uv add --dev pytest` | Add test dependency |
+| `uv sync` | Synchronize environment |
+| `uv run python main.py --mode mock` | Run the lab in mock mode |
+| `uv run pytest` | Run tests |
+| `uv tree` | View dependencies |
+
+| Project file | Purpose |
+|---|---|
+| `pyproject.toml` | Project dependencies |
+| `uv.lock` | Resolved dependency versions |
+| `.venv/` | Local Python environment |
+| `.env` | Environment variables and secrets |
+
+Commit the lockfile. Do not commit `.venv/` or `.env` secrets.
+
+The `--mode mock` option belongs to the course application, not `uv`. A mock model simulates responses without calling a real LLM.
+
+## 12. Where these concepts appear in real frameworks
+
+| Course terminology | LangChain / LangGraph |
+|---|---|
+| Tool Registry | Registered tools |
+| Tool Request | `AIMessage.tool_calls` |
+| Dispatcher | Tool invocation / `ToolNode` |
+| Observation | `ToolMessage` |
+| Request-result matching | `tool_call_id` |
+| Business authorization | Application-defined policy and hooks |
+
+Frameworks provide execution mechanisms. Your application must still define business authorization and safety policies.
+
+Optional references: [LangChain tool calling](https://docs.langchain.com/oss/python/langchain/models) · [LangGraph ToolNode](https://reference.langchain.com/python/langgraph.prebuilt/tool_node/ToolNode) · [ToolNode source code](https://github.com/langchain-ai/langgraph/blob/main/libs/prebuilt/langgraph/prebuilt/tool_node.py)
+
+## 13. Session recap
+
+### What you have built in the lab
+
+- A bounded Agent Loop (`triage/core.py`).
+- A tool registry and dispatcher with read and write tools.
+- Tool authorization and independent verification.
+- Feedback and bounded retries.
+- Repeated-call and duplicate-action prevention.
+- Human escalation on step-budget exhaustion.
+
+The original handout reports a passing 14-test suite covering the lab. See `tests/test_core.py`, including `test_duplicate_escalation_prevented`.
+
+### What limitations remain?
+
+The lab uses a deterministic mock model. Its verifier checks structure, identity and evidence provenance, not semantic classification accuracy. Production implementations still require stronger authentication, sensitive-data handling, audit logging and representative labeled evaluation datasets.
+
+### Three concepts to remember
+
+- 🔵 **Agent Loop:** The workflow that executes — Model → Action → Observation → Next decision.
+- 🟢 **Harness Engineering:** Engineering safe and reliable execution — Tools, permissions, state, limits and verification.
+- 🟣 **Loop Engineering:** Designing feedback and improvement — Continue, retry, stop, escalate and improve.
+
+### What's next?
+
+**S02 — Structured Outputs and Model Selection**
+
+S01 focuses on controlling execution and checking explicit requirements. S02 introduces a typed decision contract and methods for comparing the quality of model decisions.
+
+Both sessions can be taken independently.
 
 ## 📚 Further reading
 
-- [uv: Projects](https://docs.astral.sh/uv/guides/projects/) — environments, dependencies, and lockfiles.
-- [uv: CLI reference](https://docs.astral.sh/uv/reference/cli/) — command details.
-- [OpenAI: Function calling](https://platform.openai.com/docs/guides/function-calling) — tool request and execution concepts.
-- [OWASP: LLM application security](https://genai.owasp.org/) — prompt injection and tool-use risks.
-
-## 🗺️ What you have built, and what's next
-
-**What you have built:** a working bounded agent loop (`triage/core.py`) with **two**
-tools — the original read-only `lookup_account` and a new, side-effecting
-`create_escalation` — tool authorization, repeated-call detection, business-level
-duplicate-side-effect prevention, independent verification, bounded retry with
-feedback, and escalation on exhaustion — exercised by a passing 14-test suite, not just
-described. If you worked through the optional companion notebook, you also built a
-generic tool registry and dispatcher from first principles, before ever seeing
-`triage/core.py`'s version of the same mechanism.
-
-**What limitations remain:** the verifier checks structure, identity, and evidence
-provenance — not semantic classification accuracy. The mock model is a deterministic
-stand-in, not a real LLM. A production system still needs stronger authentication, PII
-handling, audit logging, and a real labeled evaluation set.
-
-**What the next session adds:** **S02: Structured Outputs and Model Selection** adds a
-typed decision contract and a model-comparison method for trusting *which* category or
-priority gets chosen — this session's verifier checks that a result is well-formed and
-authorized, not that the classification itself is correct. The two sessions don't
-depend on each other and can be taken in either order.
+- [uv — Project Management](https://docs.astral.sh/uv/guides/projects/)
+- [uv — CLI Reference](https://docs.astral.sh/uv/reference/cli/)
+- [OpenAI — Function Calling](https://platform.openai.com/docs/guides/function-calling)
+- [OWASP — LLM Application Security](https://genai.owasp.org/)
 
 ---
 

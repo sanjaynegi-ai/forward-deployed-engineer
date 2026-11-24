@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 430" role="img" aria-label="Anatomy of a model request">
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8Z" fill="#64748b"/></marker></defs>
+<rect width="840" height="430" rx="18" fill="#ffffff"/>
+<text x="420.0" y="36" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="bold" fill="#172033">Anatomy of a model request</text>
+<text x="420.0" y="60" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#475569">Token limits, caching and reasoning accounting vary by provider</text>
+<rect x="25" y="100" width="245" height="170" rx="12" fill="#2563eb" fill-opacity=".065" stroke="#2563eb" stroke-width="2"/>
+<text x="147.5" y="129" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" font-weight="bold" fill="#2563eb">Input context</text>
+<text x="147.5" y="153" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#172033">Instructions + ticket text</text>
+<text x="147.5" y="173" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#172033">Relevant documents</text>
+<text x="147.5" y="193" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#172033">Eligible repeated prefix</text>
+<text x="147.5" y="213" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#172033">may benefit from caching</text>
+<rect x="298" y="100" width="245" height="170" rx="12" fill="#9333ea" fill-opacity=".065" stroke="#9333ea" stroke-width="2"/>
+<text x="420.5" y="129" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" font-weight="bold" fill="#9333ea">Model processing</text>
+<text x="420.5" y="153" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#172033">Reasoning effort</text>
+<text x="420.5" y="173" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#172033">where supported</text>
+<text x="420.5" y="193" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#172033">More is not always better</text>
+<rect x="570" y="100" width="245" height="170" rx="12" fill="#15803d" fill-opacity=".065" stroke="#15803d" stroke-width="2"/>
+<text x="692.5" y="129" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" font-weight="bold" fill="#15803d">Output tokens</text>
+<text x="692.5" y="153" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#172033">Generated classification</text>
+<text x="692.5" y="173" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#172033">Response size affects</text>
+<text x="692.5" y="193" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#172033">latency and cost</text>
+<rect x="90" y="320" width="660" height="80" rx="12" fill="#b45309" fill-opacity=".065" stroke="#b45309" stroke-width="2"/>
+<text x="420.0" y="349" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" font-weight="bold" fill="#b45309">Context window / token budget</text>
+<text x="420.0" y="373" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#172033">Supported processing limits; input, output and reasoning accounting vary.</text>
+<path d="M270 185 H298" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M543 185 H570" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+</svg>
