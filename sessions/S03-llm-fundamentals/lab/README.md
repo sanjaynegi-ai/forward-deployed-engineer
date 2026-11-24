@@ -9,7 +9,9 @@ Colab (GPU optional, CPU works) or local Jupyter with the same packages.
 1. Open `S03_LLM_Fundamentals_Lab.ipynb` in Colab or JupyterLab.
 2. Run the setup cells (§0) — this installs `transformers`, `accelerate`,
    `python-dotenv`, and `openai`, and downloads the small teaching model
-   (`HuggingFaceTB/SmolLM2-135M-Instruct`, ~135M parameters) on first run.
+   (`HuggingFaceTB/SmolLM2-135M-Instruct`, ~135M parameters) on first run. Running locally
+   with `uv` instead of Colab? Run `uv sync --group s03` from the repo root, then `uv run
+   jupyter lab` and skip §0's `%pip install` cell — see `docs/TOOLING.md`.
 3. Run the notebook **top to bottom** through §9 — later cells depend on the tokenizer,
    model, and variables defined earlier. No API key, network access beyond the one-time
    model download, or paid account is required for the required path.

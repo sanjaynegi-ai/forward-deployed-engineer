@@ -1,0 +1,9 @@
+[
+  {"ticket_id": "T-401", "summary": "Customer disputes a $20 charge they don't recognize."},
+  {"ticket_id": "T-402", "summary": "Scheduled report generation has failed for three days in a row."},
+  {"ticket_id": "T-403", "summary": "New contractor needs SSO access provisioned today."},
+  {"ticket_id": "T-404", "summary": "Customer asking about our data retention policy."},
+  {"ticket_id": "T-405", "summary": "Enterprise customer wants a consolidated annual invoice."},
+  {"ticket_id": "T-406", "summary": "Customers reporting intermittent 500 errors on checkout."},
+  {"ticket_id": "T-407", "summary": "A former contractor's access was never revoked after offboarding."}
+]

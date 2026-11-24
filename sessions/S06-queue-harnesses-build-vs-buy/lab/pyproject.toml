@@ -1,0 +1,18 @@
+[project]
+name = "northstar-queue-lab"
+version = "0.1.0"
+description = "S06 queue harness teaching lab"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.4.0",
+    "pip>=26.3",
+    "pytest>=8,<10",
+]
+live = ["openai>=1.50,<3", "python-dotenv>=1,<2"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

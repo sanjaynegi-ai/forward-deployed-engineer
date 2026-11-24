@@ -25,6 +25,30 @@ interpreter, dependencies, and a reproducible environment, in one tool.
 resolved versions (commit it, for a reproducible setup); `.venv/` is the local environment
 (never commit it, and never commit `.env` secrets either).
 
+**This repo's own setup:** the repo root is itself a uv project. Its dependencies are
+split into one group per notebook-based session, so you only install what the session
+you're doing needs:
+
+| Command (run from the repo root) | What it gets you |
+|---|---|
+| `uv sync` | The base environment (JupyterLab/notebook support) — enough to open any session's `.ipynb` |
+| `uv sync --group s00` | Adds S00's one dependency (`pandas`) |
+| `uv sync --group s02` | Adds S02's one dependency (`pydantic`) |
+| `uv sync --group s03` | Adds S03's dependencies (`transformers`, `accelerate`, `openai`, `python-dotenv`) |
+| `uv sync --group s04` | Adds S04's dependencies (`pandas`, `pydantic`) |
+| `uv sync --group s05` | Adds S05's dependencies (`pandas`, `pydantic`, `tiktoken`) |
+| `uv sync --group live` | Adds the optional live-model dependency (`openai`) some sessions' optional sections use |
+| `uv run jupyter lab` | Opens JupyterLab inside this managed environment |
+
+You can combine groups, e.g. `uv sync --group s00 --group live`. Each session's own
+`lab/README.md` still has the exact commands for that session, including a plain `pip
+install`/Colab alternative where one is offered (S03 is designed to also run in Google
+Colab, which doesn't use this local environment).
+
+S01 and S06 are the exception: each lab is a full standalone Python application with its
+own `pyproject.toml`, lockfile, and `.venv`, kept intentionally separate from the rest of
+the course — see each one's own `lab/README.md`.
+
 ## VS Code
 
 Install the Python and Jupyter extensions, then select the project's `.venv` as the

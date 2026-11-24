@@ -5,7 +5,10 @@
 ## 💻 Quick start
 
 1. Open this folder in VS Code or JupyterLab.
-2. Install the one dependency this lab needs: `python -m pip install pandas` (or run the commented `%pip install` line in the notebook's first cell).
+2. Install the one dependency this lab needs: `python -m pip install pandas` (or run the
+   commented `%pip install` line in the notebook's first cell). Using `uv` locally instead?
+   Run `uv sync --group s00` from the repo root, then `uv run jupyter lab` — see
+   `docs/TOOLING.md`.
 3. Open `S00_Northstar_Prompt_Patterns_Lab.ipynb` and run the cells **top to bottom** — later cells depend on data and functions defined earlier.
 4. No API key, network access, or paid account is required for the core path. The optional live-model section (Part 6) is off by default (`RUN_LIVE = False`).
 
@@ -53,7 +56,8 @@ Q13 — practice it here first.
 
 ## 💻 Optional live model mode (requires credentials and provider validation)
 
-1. Install `openai`: `python -m pip install openai`.
+1. Install `openai`: `python -m pip install openai` (or `uv sync --group live` from the
+   repo root).
 2. Set `OPENROUTER_API_KEY` in your shell environment. Never commit it or paste it into the notebook.
 3. In Part 5, set `RUN_LIVE = True` and `LIVE_MODEL` to a verified OpenRouter model ID.
 4. Paste in one of the patterned prompts you drafted in Part 4 or 5 and compare its real

@@ -1,12 +1,14 @@
 # FDE Assessment Rubric — Cross-Session Decision Exercises
 
 **Companion to:** `prompt-engineering-decision.md`, `llm-fundamentals-decision.md`,
-`structured-output-model-decision.md`, `verified-agent-loop-decision.md`.
+`structured-output-model-decision.md`, `verified-agent-loop-decision.md`,
+`model-technique-bakeoff-decision.md`, `open-weight-local-deployment-decision.md`,
+`queue-harness-build-vs-buy-decision.md`.
 
-Each of the four decision exercises has its own per-exercise rubric, scoped to that
-session's technical content. This document is the layer above those four: a single,
+Each of the seven decision exercises has its own per-exercise rubric, scoped to that
+session's technical content. This document is the layer above those seven: a single,
 reusable scale for the **FDE mindset itself** — the eight skills this course defines FDE
-competence by — so an instructor scores the *mindset*, consistently, across all four
+competence by — so an instructor scores the *mindset*, consistently, across all seven
 exercises, not just each exercise's technical correctness.
 
 This rubric extends the course's existing competency codes (`COMPETENCIES.md`) rather
@@ -30,21 +32,21 @@ by the quizzes and interview-prep banks.
 
 ## Which exercise actually exercises which skill
 
-| Skill | S00 (Prompt) | S03 (LLM Fundamentals) | S02 (Structured Outputs) | S01 (Agent Loops) |
-|---|:---:|:---:|:---:|:---:|
-| 1. Ambiguous problem | ✅ (vague "reduce churn" ask) | — | ✅ (two stakeholders, conflicting vocabulary) | ✅ (two stakeholders, competing priorities) |
-| 2. LLM fit judgment | ✅ (prompt-only vs. a build) | — | — | ✅ (agent loop vs. rules/single-call) |
-| 3. Scope a POC | ✅ (one-week, no budget) | — | — | — |
-| 4. Justified trade-offs | — | ✅ (cost/latency/context levers) | ✅ (model A vs. B, evidence-based) | ✅ (autonomy level, risk-based) |
-| 5. Integrate into workflows | — | — | ✅ (downstream auto-routing contract) | ✅ (tool dispatch into existing harness) |
-| 6. Validate quality/reliability | ✅ (naive vs. few-shot comparison) | — | ✅ (critical-error definition, model comparison) | ✅ (verification rules) |
-| 7. Costs, limitations, risks | ✅ (caveat in the memo) | ✅ (this exercise's central subject) | — (caveat in recommendation) | ✅ (escalation/compliance risk) |
-| 8. Communicate to stakeholders | ✅ (one-page memo) | ✅ (production-config memo) | ✅ (acceptance checklist) | ✅ (authorization design one-pager) |
+| Skill | S00 (Prompt) | S03 (LLM Fundamentals) | S02 (Structured Outputs) | S01 (Agent Loops) | S04 (Bake-Offs) | S05 (Open-Weight/Local) | S06 (Queue Harnesses) |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| 1. Ambiguous problem | ✅ (vague "reduce churn" ask) | — | ✅ (two stakeholders, conflicting vocabulary) | ✅ (two stakeholders, competing priorities) | ✅ (VP's stated want vs. the actual cost/risk question) | ✅ (account team's assumption vs. the actual residency constraint) | ✅ (lead's "faster to build" want vs. the actual unverified risk) |
+| 2. LLM fit judgment | ✅ (prompt-only vs. a build) | — | — | ✅ (agent loop vs. rules/single-call) | — | — | — |
+| 3. Scope a POC | ✅ (one-week, no budget) | — | — | — | — | — | — |
+| 4. Justified trade-offs | — | ✅ (cost/latency/context levers) | ✅ (model A vs. B, evidence-based) | ✅ (autonomy level, risk-based) | ✅ (accuracy vs. volume-scaled cost) | ✅ (accuracy vs. cost/latency/memory/residency) | ✅ (build-vs-buy, verified vs. documented claims) |
+| 5. Integrate into workflows | — | — | ✅ (downstream auto-routing contract) | ✅ (tool dispatch into existing harness) | — | — | ✅ (orchestration framework adoption decision) |
+| 6. Validate quality/reliability | ✅ (naive vs. few-shot comparison) | — | ✅ (critical-error definition, model comparison) | ✅ (verification rules) | ✅ (routing-signal false-negative validation) | ✅ (topic-hint validation, hosted/local mismatch as bug) | ✅ (crash-simulation verification plan) |
+| 7. Costs, limitations, risks | ✅ (caveat in the memo) | ✅ (this exercise's central subject) | — (caveat in recommendation) | ✅ (escalation/compliance risk) | ✅ (this exercise's central subject) | ✅ (this exercise's central subject) | ✅ (cost of a repeat incident) |
+| 8. Communicate to stakeholders | ✅ (one-page memo) | ✅ (production-config memo) | ✅ (acceptance checklist) | ✅ (authorization design one-pager) | ✅ (recommendation-plus-validation-plan) | ✅ (constraint-first recommendation) | ✅ (build-vs-buy recommendation) |
 
-No single exercise exercises all eight skills — that's deliberate. Across all four, every
-skill gets exercised at least twice, which is what lets an instructor distinguish "this
-learner struggled once, in one context" from "this learner consistently struggles with
-skill 4 regardless of session."
+No single exercise exercises all eight skills — that's deliberate. Across all seven,
+every skill gets exercised at least once, and most at least twice, which is what lets an
+instructor distinguish "this learner struggled once, in one context" from "this learner
+consistently struggles with skill 4 regardless of session."
 
 ## The reusable 0–3 scale
 
@@ -58,18 +60,18 @@ learner has completed — not a new scale invented per exercise.
 | **2 — Competent** | Gives a specific, workable answer tied to the brief's actual details, with at least one limitation acknowledged. |
 | **3 — Strong** | Adds a concrete trade-off, a named risk, or a stakeholder-specific framing that goes beyond what the exercise's prompts explicitly asked for. |
 
-## Per-learner scoring sheet (reuse across all four exercises)
+## Per-learner scoring sheet (reuse across all seven exercises)
 
-| Skill | S00 score | S03 score | S02 score | S01 score | Notes |
-|---|:---:|:---:|:---:|:---:|---|
-| 1. Ambiguous problem | | n/a | | | |
-| 2. LLM fit judgment | | n/a | n/a | | |
-| 3. Scope a POC | | n/a | n/a | n/a | |
-| 4. Justified trade-offs | n/a | | | | |
-| 5. Integrate into workflows | n/a | n/a | | | |
-| 6. Validate quality/reliability | | n/a | | | |
-| 7. Costs, limitations, risks | | | n/a | | |
-| 8. Communicate to stakeholders | | | | | |
+| Skill | S00 score | S03 score | S02 score | S01 score | S04 score | S05 score | S06 score | Notes |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|---|
+| 1. Ambiguous problem | | n/a | | | | | | |
+| 2. LLM fit judgment | | n/a | n/a | | n/a | n/a | n/a | |
+| 3. Scope a POC | | n/a | n/a | n/a | n/a | n/a | n/a | |
+| 4. Justified trade-offs | n/a | | | | | | | |
+| 5. Integrate into workflows | n/a | n/a | | | n/a | n/a | | |
+| 6. Validate quality/reliability | | n/a | | | | | | |
+| 7. Costs, limitations, risks | | | n/a | | | | | |
+| 8. Communicate to stakeholders | | | | | | | | |
 
 ### ⚠️ Red flags, across any exercise
 
@@ -91,7 +93,7 @@ difference between "here's an analysis" and "here's what I'd actually do, and wh
 ## How this complements, not replaces, existing assessment
 
 - **Session quizzes** (`quiz.md`) test technical recall and mechanism — can the learner
-  compute a cost, trace a loop, validate a contract. These four exercises assume that
+  compute a cost, trace a loop, validate a contract. These seven exercises assume that
   layer is already solid and test judgment *on top of it*.
 - **Interview-prep banks** (`interview-prep.md`) rehearse verbal reasoning and trade-off
   defense in a mock-interview format. These exercises produce a written artifact instead,

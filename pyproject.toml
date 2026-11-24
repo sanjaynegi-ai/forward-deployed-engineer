@@ -1,0 +1,36 @@
+[project]
+name = "fde"
+version = "0.1.0"
+description = "AI-Focused Forward Deployed Engineering — learner-facing course repo"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
+
+# Shared, reproducible environment for the notebook-based session labs (S00, S02, S03,
+# S04, S05). Each group covers one session's notebook dependencies, so a learner only
+# installs what the session they're doing actually needs: `uv sync --group s02`.
+#
+# S01's and S06's labs are standalone Python applications with their own uv projects
+# (see sessions/S01-verified-agent-loops/lab/ and
+# sessions/S06-queue-harnesses-build-vs-buy/lab/) and are intentionally excluded here.
+[dependency-groups]
+notebooks = [
+    "jupyter>=1.0,<2",
+    "ipykernel>=7,<8",
+]
+s00 = ["pandas>=2,<3"]
+s02 = ["pydantic>=2,<3"]
+s03 = [
+    "transformers>=4,<5",
+    "accelerate>=1,<2",
+    "python-dotenv>=1,<2",
+    "openai>=1.50,<3",
+]
+s04 = ["pandas>=2,<3", "pydantic>=2,<3"]
+s05 = ["pandas>=2,<3", "pydantic>=2,<3", "tiktoken>=0.7,<1"]
+# Shared optional "live model" add-on for S00's and S02's labs (off by default).
+live = ["openai>=1.50,<3", "python-dotenv>=1,<2"]
+
+[tool.uv]
+package = false
+default-groups = ["notebooks"]

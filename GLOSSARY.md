@@ -29,6 +29,29 @@ Three sub-ideas sessions build on:
   search heuristic, not reinforcement learning, and vulnerable to small-sample noise and
   overfitting to the test set.
 
+### Tiered Dispatch
+*(introduced in S04)*
+
+Routing a request to a **cheap technique by default**, and escalating to a more
+expensive, higher-capability technique **only when a cheap signal says the cheap
+technique's answer can't be trusted**. Not a new model or mechanism — a dispatch
+decision between two techniques a system already has (e.g., S02's single structured
+call and S01's verified agent loop).
+
+Tiered dispatch is only as trustworthy as its routing signal. The signal has two
+distinct failure directions, and they are not equally dangerous:
+- **False "stay cheap"** — the signal wrongly trusts the cheap technique on a case it
+  can't actually handle. This silently ships a wrong decision; nothing downstream
+  catches it.
+- **False "escalate"** — the signal wrongly distrusts the cheap technique on a case it
+  could have handled. This only costs the extra expense of the escalated technique; the
+  case still gets decided correctly.
+
+A routing signal must be validated on representative, held-out data — specifically for
+its false-negative ("stay cheap") rate — before it's trusted in production. A clean
+separation on a small curated trial is a hypothesis about the signal, not evidence for
+it.
+
 ---
 
 ## About the mentor
