@@ -25,29 +25,50 @@ interpreter, dependencies, and a reproducible environment, in one tool.
 resolved versions (commit it, for a reproducible setup); `.venv/` is the local environment
 (never commit it, and never commit `.env` secrets either).
 
-**This repo's own setup:** the repo root is itself a uv project. Its dependencies are
-split into one group per notebook-based session, so you only install what the session
-you're doing needs:
+**This repo's own setup:** the repo root is itself a single uv project, and it's the
+**only** dependency manifest in the whole course — no session's `lab/` has its own
+`pyproject.toml`, `uv.lock`, or `.venv`. Every session's notebooks AND S01's and S06's
+standalone CLI apps (`main.py` + `pytest`) all install from and run inside this one root
+environment. There's deliberately only one flat dependency list, not a group per
+session, so there's nothing to figure out:
 
 | Command (run from the repo root) | What it gets you |
 |---|---|
-| `uv sync` | The base environment (JupyterLab/notebook support) — enough to open any session's `.ipynb` |
-| `uv sync --group s00` | Adds S00's one dependency (`pandas`) |
-| `uv sync --group s02` | Adds S02's one dependency (`pydantic`) |
-| `uv sync --group s03` | Adds S03's dependencies (`transformers`, `accelerate`, `openai`, `python-dotenv`) |
-| `uv sync --group s04` | Adds S04's dependencies (`pandas`, `pydantic`) |
-| `uv sync --group s05` | Adds S05's dependencies (`pandas`, `pydantic`, `tiktoken`) |
-| `uv sync --group live` | Adds the optional live-model dependency (`openai`) some sessions' optional sections use |
+| `uv sync` | Everything, every session needs — JupyterLab/notebook support, `pandas`, `pydantic`, `openai`, `python-dotenv`, `transformers`, `accelerate`, `tiktoken`, `pytest` |
 | `uv run jupyter lab` | Opens JupyterLab inside this managed environment |
+| `uv run pytest` | Runs S01's or S06's test suite (scoped to whichever folder you run it from) |
 
-You can combine groups, e.g. `uv sync --group s00 --group live`. Each session's own
-`lab/README.md` still has the exact commands for that session, including a plain `pip
-install`/Colab alternative where one is offered (S03 is designed to also run in Google
-Colab, which doesn't use this local environment).
+One `uv sync` is enough for any session's `.ipynb`, including S01's two notebooks (which
+need only the local `triage` package beyond this). Each session's own `lab/README.md`
+still has the exact commands for that session, including a plain `pip install`/Colab
+alternative where one is offered (S03 is designed to also run in Google Colab, which
+doesn't use this local environment).
 
-S01 and S06 are the exception: each lab is a full standalone Python application with its
-own `pyproject.toml`, lockfile, and `.venv`, kept intentionally separate from the rest of
-the course — see each one's own `lab/README.md`.
+**Why every notebook and both CLI apps work from one root environment:** `uv run` walks
+up from your current directory to find the nearest `pyproject.toml` — so running
+`uv run python main.py` or `uv run pytest` from inside
+`sessions/S01-verified-agent-loops/lab/` or `sessions/S06-queue-harnesses-build-vs-buy/lab/`
+resolves to this root project automatically, while your working directory (and so each
+app's relative data paths, and `pytest`'s default test discovery) stays exactly where you
+ran it from. Jupyter does the equivalent for notebooks: it starts each notebook's kernel
+with its working directory set to wherever that `.ipynb` file lives, regardless of which
+directory you launched `jupyter lab` from — so `S01_Northstar_Triage_Notebook.ipynb` and
+`Tool_Calling_From_Scratch.ipynb` can `import triage.core` and read
+`sessions/S01-verified-agent-loops/lab/data/tickets.json` correctly even though the
+kernel itself is this root environment. The root `pyproject.toml`'s
+`[tool.pytest.ini_options]` adds both labs' folders to `pythonpath` and sets
+`--import-mode=importlib`, so `uv run pytest sessions` from the root can collect both
+labs' same-named `tests/test_core.py` in one run with no import collision.
+
+## Secrets and `.env`
+
+There is exactly **one** `.env.example` in the whole repo, at the **root** — no session's
+`lab/` has its own. Copy it to `.env` (also at the root; never commit it) and fill in only
+the keys you need. Every session's optional live-model notebook cell, and S01's and S06's
+standalone CLI apps (`triage/live.py` already calls `load_dotenv()`), call python-dotenv's
+`load_dotenv()`, which walks up the directory tree from wherever the code runs until it
+finds a `.env` — so the root one is found automatically no matter which session's folder
+you're running from.
 
 ## VS Code
 

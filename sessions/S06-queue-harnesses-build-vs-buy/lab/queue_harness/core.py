@@ -3,7 +3,7 @@
 Deciding one ticket is S01's and S02's content, already taught. This module never
 re-teaches that — `decide_fn` below is an injected callable, and the harness itself
 knows nothing about tickets, categories, or priorities. It only knows: pending,
-in-progress, done, or needs_review; how many attempts an item has had; and the one
+done, or needs_review; how many attempts an item has had; and the one
 invariant it enforces on every call: no item may be lost or double-counted.
 """
 
@@ -63,10 +63,10 @@ def work_queue(state: QueueState, decide_fn, max_attempts: int = 2, cap: int | N
     TransientError) either leaves the ticket "pending" for a future call, or, once
     `max_attempts` is reached, marks it "needs_review" instead of retrying forever.
 
-    Idempotent and crash-safe: a ticket already "done" or "needs_review" is never
-    reprocessed, even if this function is called again on the same state after a
-    simulated restart — the state machine itself is what guarantees this, not a
-    separate duplicate check.
+    Idempotent across calls: a ticket already "done" or "needs_review" is never
+    reprocessed, including after serialized state is loaded by a new process. The
+    state machine itself guarantees this without a separate duplicate check. Durable
+    mid-run crash recovery is outside this in-memory function's scope.
     """
     processed = 0
     for ticket_id, ticket in state.tickets.items():

@@ -6,12 +6,14 @@ Colab (GPU optional, CPU works) or local Jupyter with the same packages.
 
 ## 💻 Quick start
 
-1. Open `S03_LLM_Fundamentals_Lab.ipynb` in Colab or JupyterLab.
-2. Run the setup cells (§0) — this installs `transformers`, `accelerate`,
-   `python-dotenv`, and `openai`, and downloads the small teaching model
-   (`HuggingFaceTB/SmolLM2-135M-Instruct`, ~135M parameters) on first run. Running locally
-   with `uv` instead of Colab? Run `uv sync --group s03` from the repo root, then `uv run
-   jupyter lab` and skip §0's `%pip install` cell — see `docs/TOOLING.md`.
+1. Open `S03_LLM_Fundamentals_Lab.ipynb` in Colab or JupyterLab. Running locally instead
+   of Colab: environment setup (dependencies, kernel selection) is a one-time step done
+   once at the **repo root**, not per lab — see the root `README.md` / `docs/TOOLING.md`.
+2. Run the setup cells (§0). In Colab, this `%pip install`s `transformers`, `accelerate`,
+   `python-dotenv`, and `openai` itself; running locally from the repo root, skip §0's
+   `%pip install` cell since the root environment already has them. Either way, this cell
+   also downloads the small teaching model (`HuggingFaceTB/SmolLM2-135M-Instruct`, ~135M
+   parameters) on first run.
 3. Run the notebook **top to bottom** through §9 — later cells depend on the tokenizer,
    model, and variables defined earlier. No API key, network access beyond the one-time
    model download, or paid account is required for the required path.
@@ -81,7 +83,9 @@ this become homework you never start.
 - **§4:** the softmax conceptual note.
 - **§7:** the TTFT/TPOT vocabulary note (precise measurement is out of scope).
 - **§8b — hosted-provider comparison:** requires `OPENAI_API_KEY` and/or
-  `OPENROUTER_API_KEY` set as environment variables (never pasted into the notebook).
+  `OPENROUTER_API_KEY`. Running locally (not Colab): copy the repo root's `.env.example`
+  to `.env` and set whichever key(s) you have — the cell calls `load_dotenv()` and finds
+  it automatically. Running in Colab: run the optional `UPLOAD_ENV` cell in §0 first.
   Skips gracefully with a printed message if no keys are present. Only ever use synthetic
   prompts here — never real customer data.
 - **End-of-notebook optional self-study activities:** five additional exercises for

@@ -11,6 +11,8 @@ DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
 @dataclass
 class Decision:
+    """Describe one model proposal: call a tool or submit a final candidate."""
+
     kind: str  # 'tool' or 'final'
     name: str | None = None
     arguments: dict[str, Any] | None = None
@@ -18,6 +20,8 @@ class Decision:
     call_id: str | None = None
 
 class Model(Protocol):
+    """Interface shared by the deterministic mock and the optional live model."""
+
     def decide(self, ticket: dict, observations: list[dict], feedback: list[str]) -> Decision: ...
 
 def lookup_account(account_id: str, *, expected_account_id: str | None) -> dict:
@@ -61,6 +65,8 @@ def create_escalation(
 
 
 def verify(candidate: Any, ticket: dict, observations: list[dict]) -> list[str]:
+    """Return every validation error found in a proposed final classification."""
+
     if not isinstance(candidate, dict):
         return ["candidate must be a JSON object"]
     errors = []
@@ -82,9 +88,13 @@ def verify(candidate: Any, ticket: dict, observations: list[dict]) -> list[str]:
 class MockModel:
     """Deterministic teaching stand-in; not a real LLM."""
     def __init__(self, inject_invalid_first: bool = False):
+        """Configure whether the first decision intentionally fails verification."""
+
         self.inject_invalid_first = inject_invalid_first
         self.calls = 0
     def decide(self, ticket: dict, observations: list[dict], feedback: list[str]) -> Decision:
+        """Choose the next tool request or final classification from current state."""
+
         self.calls += 1
         if self.inject_invalid_first and not feedback and not observations:
             return Decision(kind="final", candidate={"ticket_id": ticket["ticket_id"], "category": "refunds"})
@@ -114,6 +124,12 @@ class MockModel:
 TOOL_ALLOWLIST = {"lookup_account", "create_escalation"}
 
 def run_agent(ticket: dict, model: Model, *, max_steps: int = 4) -> dict:
+    """Run the bounded decide/act/observe loop until a result verifies or review is needed.
+
+    The application, rather than the model, validates tool names and arguments,
+    enforces authorization and idempotency, executes tools, and verifies final output.
+    """
+
     observations: list[dict] = []
     feedback: list[str] = []
     trace: list[dict] = []

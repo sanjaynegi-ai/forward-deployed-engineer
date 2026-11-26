@@ -1,41 +1,71 @@
 # S06 — Northstar Queue Harness Lab
 
-**Audience:** Experienced software professionals who have done S01. **Duration:** 90-minute live session, plus optional extensions. All data is synthetic.
+## Why this lab exists
 
-## 💻 Quick start (VS Code terminal)
+Earlier sessions decide one ticket at a time. A production workload must also answer a
+different set of questions: Which ticket should run next? What happens when one attempt
+fails? How does work resume after a completed run? How do we guarantee that no ticket is
+lost, processed twice, or retried forever?
 
-1. Open this folder in VS Code.
-2. Install `uv` during pre-course onboarding; verify with `uv --version`.
-3. Run `uv sync --group dev` (generates `uv.lock` if missing; commit it after resolution).
-4. Run `uv run python main.py --mode queue --cap 3`. It processes the first 3 pending
+This lab builds a small queue harness around an already-defined ticket decision function.
+The decision function is intentionally simple so you can focus on orchestration: persisted
+state, capped batches, bounded retry, escalation, idempotency, and observable invariants.
+All tickets and failures are synthetic and deterministic.
+
+## What you will learn
+
+By the end of the lab, you should be able to:
+
+1. Model queued work as explicit states instead of an unstructured loop.
+2. Process only a bounded number of pending items in one run.
+3. Resume from state saved by an earlier completed run without reprocessing finished work.
+4. Distinguish a transient failure from a chronic failure that needs human review.
+5. Explain how idempotency follows from allowed state transitions.
+6. State what this local harness proves—and what still requires a production queue or workflow system.
+
+## How the pieces fit together
+
+| File | Responsibility |
+|---|---|
+| `data/tickets.json` | Synthetic workload to be processed |
+| `queue_harness/tickets.py` | Deterministic decision function for one ticket |
+| `queue_harness/core.py` | Queue state, bounded processing, retries, and invariants |
+| `main.py` | Command-line entry point and persistence between runs |
+| `tests/test_core.py` | Executable checks for the harness guarantees |
+
+## 💻 Quick start
+
+Run these examples from this lab folder:
+
+1. Run `uv run python main.py --mode queue --cap 3 --reset`. It starts a fresh queue,
+   processes the first three pending
    tickets, saves state, and tells you how many are still pending.
-5. Run the exact same command again. It resumes from exactly where it left off — watch
-   the task list printed at the start of the run to confirm nothing was lost or redone.
-6. Run `uv run python main.py --mode queue --cap 3 --fail-first T-402 --fail-always T-406 --reset`
+2. Run `uv run python main.py --mode queue --cap 3` without `--reset`. It resumes from
+   the saved state — watch
+   the task list printed at the start to confirm finished tickets are not processed again.
+3. Run `uv run python main.py --mode queue --cap 3 --fail-first T-402 --fail-always T-406 --reset`
    to start over and watch a one-time failure (retried and resolved) and a chronic
-   failure (eventually escalated) happen live. Keep running the same command until the
-   queue reports `pending: 0`.
-7. Run `uv run pytest` to execute the tests (17, covering idempotency, crash-safe
-   resumption, bounded retry, chronic-failure escalation, and the no-lost-no-double-
-   counted invariant).
+   failure (eventually sent to review). Repeat without `--reset` until the queue reports
+   `pending: 0`.
+4. Run `uv run pytest` to execute the automated checks.
 
-`uv` may install the pinned Python 3.12 if not available; network access is required
-for initial environment setup. The queue harness itself uses only the Python standard
-library.
+The queue harness itself uses only the Python standard library.
 
 ## 🧩 Concept map
 
-- **State machine, not a loop with a counter:** every ticket is `pending`, `done`, or
+- **State machine, not just a loop with a counter:** every ticket is `pending`, `done`, or
   `needs_review` — the harness's entire job is moving tickets between these states
   correctly, under a cap, across however many times it's called.
 - **Idempotency by construction:** once a ticket leaves `pending`, no code path in
   `work_queue` can touch it again — see `queue_harness/core.py`'s docstring for why this
   doesn't need a separate duplicate check, unlike S01's `create_escalation`.
-- **Fresh subagent per item:** `decide_fn(ticket_id)` receives nothing but the ticket's
-  identity — no shared history across items, by construction, not by convention.
-- **Crash-safety, demonstrated live:** `main.py` persists the exact state `work_queue`
-  mutates, after every run — the CLI's resume-across-restart behavior in step 5/6 above
-  is the same property the test suite checks, made visible on the command line.
+- **Isolated decision per item:** `decide_fn(ticket_id)` receives only one ticket's
+  identity, with no shared conversation history from other tickets.
+- **Resume between completed runs:** `main.py` saves the state after `work_queue` returns.
+  A later process can reload that file and continue. This demonstrates restartable batch
+  processing, but not transaction-level recovery from a crash in the middle of a run.
+- **Bounded failure handling:** one failed attempt leaves work pending; reaching the
+  configured attempt limit moves it to `needs_review` instead of retrying forever.
 
 > [!NOTE]
 > This lab does not re-teach how one ticket gets decided or verified — `decide_fn` here
@@ -43,25 +73,43 @@ library.
 > directed decision and verification mechanics, see the **S01** lab
 > (`../../S01-verified-agent-loops/lab/`).
 
-## 🛠️ Checkpoints / exercises
+## 🛠️ Guided exercises
 
-**00 — Starter:** inspect `data/tickets.json`, `queue_harness/core.py`, and `main.py`;
-run the queue uncapped (`uv run python main.py --mode queue --reset`) and confirm all 7
-tickets finish in one run.
+### 1. Read the state model
 
-**01 — Capped runs:** use `--cap 2` repeatedly and trace, by hand, how `done`/`pending`
-change after each run before checking the printed summary.
+Inspect `TicketState`, `QueueState`, and `report()` in `queue_harness/core.py`. Before
+running anything, write down the three allowed states and the invariant that must hold.
 
-**02 — Transient failure:** use `--fail-first T-402`. Confirm it's `pending` after the
+### 2. Process an uncapped queue
+
+Run `uv run python main.py --mode queue --reset`. Confirm all seven tickets finish in one
+run and that `done + needs_review + pending == total`.
+
+### 3. Resume capped batches
+
+Use `--cap 2` repeatedly. Predict how `done` and `pending` will change before each run,
+then compare your prediction with the printed task list.
+
+### 4. Observe a transient failure
+
+Use `--fail-first T-402`. Confirm it remains `pending` after the
 run that first attempts it, and `done` (with `attempts=2`) after the next run that
 reaches it.
 
-**03 — Chronic failure:** use `--fail-always T-406`. Confirm it takes exactly two runs
+### 5. Observe a chronic failure
+
+Use `--fail-always T-406`. Confirm it takes exactly two runs
 that reach it to become `needs_review`, and that a third run never attempts it again.
 
-**04 — Idempotency:** after a ticket is `done`, add a `print` statement inside
+### 6. Verify idempotency
+
+After a ticket is `done`, add a temporary `print` statement inside
 `decide_fn` and confirm, by rerunning the CLI, that it never prints for that ticket
 again — the skip happens before `decide_fn` is ever called.
+
+Remove the temporary print after the experiment.
+
+## Extension challenges
 
 **Challenge A:** Reintroduce the bug described in the handout's §3 (track attempts in a
 separate, unpersisted dictionary instead of reading `state`) and confirm you can
@@ -75,13 +123,10 @@ the state, deserializes it into a *new* `QueueState` object (simulating a real r
 more literally than calling `work_queue` twice on the same object), and confirms the
 queue still finishes correctly.
 
-## 💻 Optional live model mode (requires credentials and provider validation)
+## 💻 Optional model-backed decision function
 
-1. Run `uv sync --group live --group dev`.
-2. Copy `.env.example` to `.env` (create one if it doesn't exist) and set
-   `OPENROUTER_API_KEY`. Never commit `.env`.
-3. Replace `queue_harness/tickets.py`'s `decide_ticket` with a real single structured
-   call (S02's `TicketDecision` contract), and rerun `main.py`.
+Replace `queue_harness/tickets.py`'s `decide_ticket` with a real single structured
+call (S02's `TicketDecision` contract), and rerun `main.py`.
 
 The queue harness itself is completely unaware of whether `decide_fn` is a mock or a
 real model call — that's the point of the `decide_fn` boundary. Swapping it is a
@@ -91,9 +136,8 @@ one-function change, not a change to anything in `queue_harness/core.py`.
 > Providers differ in structured-output support; the live path is **not prevalidated**
 > and may incur charges. Only ever use synthetic tickets, never real customer data.
 
-## 🔍 Troubleshooting
+## 🔍 Troubleshooting the harness
 
-- `uv` not found: complete pre-course installation and restart terminal.
 - A ticket you expect to be `pending` shows as `done`: you're probably running against a
   saved `data/queue_state.json` from an earlier session — run with `--reset`.
 - `--fail-first` seems to fail every run, not just once: this is the exact bug the
@@ -104,9 +148,9 @@ one-function change, not a change to anything in `queue_harness/core.py`.
   `test_invariant_holds_at_every_cap_size` are the two most likely to catch a state-
   machine regression early.
 
-## ✅ Validation checklist
+## ✅ Check your understanding
 
-- [ ] `uv run pytest` passes all 17 tests.
+- [ ] The test suite passes.
 - [ ] A capped CLI run leaves the correct number of tickets pending, and a repeat run
       resumes without reprocessing anything already `done`.
 - [ ] `--fail-first` resolves to `done` within two runs; `--fail-always` resolves to
@@ -123,20 +167,10 @@ no claim about real decision accuracy, which is S01's and S02's scope, not this 
 The persistence mechanism is a single local JSON file, adequate for a teaching demo of
 the resume-across-restart property but not a real durability guarantee at production
 scale (a real system would need a transactional data store, not a flat file a
-concurrent second process could corrupt). The fault-injection mechanism is a controlled
-teaching tool, not a real chaos-engineering harness. The build-vs-buy comparison in the
+concurrent second process could corrupt). State is saved only after a completed
+`work_queue` call, so a process crash during a run can also lose that run's in-memory
+progress. The fault-injection mechanism is a controlled teaching tool, not a real
+chaos-engineering harness. The build-vs-buy comparison in the
 handout's §5 is illustrative, not a benchmark of any specific real framework — the FDE
 decision exercise asks you to design a real verification plan precisely because this
 lab can't substitute for one.
-
----
-
-## About the mentor
-
-**Sanjay Negi** brings 23+ years of industry experience and helps experienced software engineers and technology leaders transition into high-value AI roles, including **AI Engineer**, **Forward Deployed Engineer**, and **GenAI Architect**. He has trained more than 1,100 experienced engineers.
-
-<p align="center"><img src="../../../assets/diagrams/SkillUpWithSanjay.png" alt="SkillUp with Sanjay logo" width="60"></p>
-
-<p align="center"><strong>#SkillUpWithSanjay</strong></p>
-
-<p align="center"><a href="https://www.sanjaynegi.in" target="_blank" rel="noopener noreferrer">Website</a>&nbsp;&middot;&nbsp;<a href="https://www.linkedin.com/in/sanjay-negi-ai/" target="_blank" rel="noopener noreferrer">LinkedIn</a></p>

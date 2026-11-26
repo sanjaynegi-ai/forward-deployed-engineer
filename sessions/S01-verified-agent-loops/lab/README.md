@@ -2,23 +2,39 @@
 
 **Audience:** Experienced software professionals, including learners new to Python. **Duration:** 90-minute live session, plus optional extensions. All data is synthetic.
 
-## 💻 Quick start (VS Code terminal)
+## 💻 Quick start
 
-1. Open this folder in VS Code.
-2. Install `uv` during pre-course onboarding; verify with `uv --version`.
-3. Run `uv sync --group dev` (generates `uv.lock` if missing; commit it after resolution).
-4. Run `uv run python main.py --mode mock`.
-5. Run `uv run python main.py --mode mock --ticket T-101` to compare a single-call task.
-6. Run `uv run python main.py --mode mock --ticket T-101 --invalid-first` to see verifier feedback and retry.
-7. Run `uv run python main.py --mode mock --ticket T-110` to see the two-tool escalation
+Environment setup — installing `uv`, syncing dependencies, selecting the kernel — is a
+one-time step done once at the **repo root**, not per lab: see the root
+[`README.md`](../../../README.md) and [`docs/TOOLING.md`](../../../docs/TOOLING.md).
+Once that's done, everything below runs from this folder:
+
+1. `uv run python main.py --mode mock`.
+2. `uv run python main.py --mode mock --ticket T-101` to compare a single-call task.
+3. `uv run python main.py --mode mock --ticket T-101 --invalid-first` to see verifier feedback and retry.
+4. `uv run python main.py --mode mock --ticket T-110` to see the two-tool escalation
    path: `lookup_account` → `create_escalation` → final decision, on a premium account
    with a high-priority ticket.
-8. Run `uv run python main.py --mode mock --ticket T-111` to see the same critical
+5. `uv run python main.py --mode mock --ticket T-111` to see the same critical
    wording **not** escalate, because the account is standard tier, not premium.
-9. Run `uv run pytest` to execute the tests (14, including six for `create_escalation`'s
+6. `uv run pytest` to execute the tests (14, including six for `create_escalation`'s
    authorization and duplicate-prevention behavior).
 
-`uv` may install the pinned Python 3.12 if not available; network access is required for initial environment setup. The mock application itself uses only the Python standard library.
+The mock application itself uses only the Python standard library.
+
+## 📓 This lab's two notebooks
+
+Both notebooks open and run from the repo root's shared Jupyter environment — see the
+root `README.md` / `docs/TOOLING.md` for setup; nothing in this folder needs its own.
+
+- **`S01_Northstar_Triage_Notebook.ipynb`** — the core lab: classify tickets with
+  `MockModel`, observe the agent loop, watch verification and retry, see Loop
+  Engineering in the trace. See the concept map below.
+- **`Tool_Calling_From_Scratch.ipynb`** — optional companion (see the note below).
+
+Jupyter starts each notebook's kernel with its working directory set to the notebook's
+own folder, so `from triage.core import ...` and `data/tickets.json` resolve correctly
+no matter which directory Jupyter itself was launched from.
 
 ## 🧩 Concept map
 
@@ -48,7 +64,7 @@
 
 ## 🛠️ Checkpoints / exercises
 
-**00 — Starter:** inspect `data/tickets.json`, `pyproject.toml`, and `main.py`; run mock.
+**00 — Starter:** inspect `data/tickets.json`, `triage/core.py`, and `main.py`; run mock.
 
 **01 — Single call:** use `--ticket T-101`. Locate model decision and verifier; explain why a tool is unnecessary.
 
@@ -70,9 +86,9 @@ specific scenario.
 
 ## 💻 Optional live model mode (requires credentials and provider validation)
 
-1. Run `uv sync --group live --group dev`.
-2. Copy `.env.example` to `.env`, configure a **tested** tool-capable model and provider key. Never commit `.env`.
-3. Run `uv run python main.py --mode live`.
+1. Copy the repo root's `.env.example` to `.env` (also at the repo root) and configure a
+   **tested** tool-capable model and provider key there. Never commit `.env`.
+2. Run `uv run python main.py --mode live`.
 
 The live adapter uses OpenAI-compatible Chat Completions. It is intentionally small: it reconstructs each request from the ticket, observations, and verification feedback rather than maintaining a full provider-native multi-message tool transcript. This works as a pedagogical orchestration pattern for compatible models but is **not** a production agent implementation.
 
@@ -83,10 +99,9 @@ The live adapter uses OpenAI-compatible Chat Completions. It is intentionally sm
 
 ## 🔍 Troubleshooting
 
-- `uv` not found: complete pre-course installation and restart terminal.
-- Python version unavailable: `uv python install 3.12` then `uv sync`.
-- Tests unavailable: run `uv sync --group dev`.
-- Live `401` or missing key: check `.env` locally; never share keys in screenshots.
+- `uv` not found, Python version unavailable, or tests unavailable: these are all
+  environment/dependency issues — see the repo root's `README.md` / `docs/TOOLING.md`.
+- Live `401` or missing key: check the repo root's `.env`; never share keys in screenshots.
 - Live malformed output: inspect trace; verifier should reject or escalate.
 - Network or provider unavailable: switch to `--mode mock` immediately.
 

@@ -4,33 +4,35 @@ version = "0.1.0"
 description = "AI-Focused Forward Deployed Engineering — learner-facing course repo"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
-
-# Shared, reproducible environment for the notebook-based session labs (S00, S02, S03,
-# S04, S05). Each group covers one session's notebook dependencies, so a learner only
-# installs what the session they're doing actually needs: `uv sync --group s02`.
-#
-# S01's and S06's labs are standalone Python applications with their own uv projects
-# (see sessions/S01-verified-agent-loops/lab/ and
-# sessions/S06-queue-harnesses-build-vs-buy/lab/) and are intentionally excluded here.
-[dependency-groups]
-notebooks = [
+# Every dependency any session's notebook or standalone CLI lab (S01, S06) needs, all in
+# one flat list -- `uv sync` alone from the repo root installs everything, so a learner
+# never has to figure out which extra a given session needs. This is the ONLY dependency
+# manifest in the whole repo; no session's lab/ has its own pyproject.toml/uv.lock/.venv.
+dependencies = [
     "jupyter>=1.0,<2",
     "ipykernel>=7,<8",
-]
-s00 = ["pandas>=2,<3"]
-s02 = ["pydantic>=2,<3"]
-s03 = [
+    "python-dotenv>=1,<2",
+    "pytest>=8,<10",
+    "pandas>=2,<3",
+    "pydantic>=2,<3",
+    "openai>=1.50,<3",
     "transformers>=4,<5",
     "accelerate>=1,<2",
-    "python-dotenv>=1,<2",
-    "openai>=1.50,<3",
+    "tiktoken>=0.7,<1",
 ]
-s04 = ["pandas>=2,<3", "pydantic>=2,<3"]
-s05 = ["pandas>=2,<3", "pydantic>=2,<3", "tiktoken>=0.7,<1"]
-# Shared optional "live model" add-on for S00's and S02's labs (off by default).
-live = ["openai>=1.50,<3", "python-dotenv>=1,<2"]
 
 [tool.uv]
 package = false
-default-groups = ["notebooks"]
+
+# S01's and S06's standalone CLI labs each ship their own `triage`/`queue_harness`
+# package under sessions/<session>/lab/ with no pyproject.toml of their own -- this makes
+# that folder importable (for `import triage.core` / `import queue_harness`) regardless
+# of which directory pytest is invoked from. --import-mode=importlib avoids a
+# module-name collision between the two labs' same-named tests/test_core.py files when
+# both are collected in one run (e.g. `uv run pytest sessions`).
+[tool.pytest.ini_options]
+pythonpath = [
+    "sessions/S01-verified-agent-loops/lab",
+    "sessions/S06-queue-harnesses-build-vs-buy/lab",
+]
+addopts = "--import-mode=importlib"

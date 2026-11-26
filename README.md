@@ -44,13 +44,18 @@ other — do either, both, or neither, in whatever order their own prerequisites
 Each session's `handout.md` is itself the entry point for that session — it links out to
 that session's own `quiz.md`, `interview-prep.md`, and `lab/`.
 
-**One-time environment setup:** this repo is a [uv](https://docs.astral.sh/uv/)-managed
-Python project. From the repo root, `uv sync` gets you a working Jupyter environment, and
-`uv sync --group s00` (or `s02`, `s03`) adds the one or two extra packages that session's
-lab needs. See [`docs/TOOLING.md`](docs/TOOLING.md) for the full command reference,
-including the plain-`pip`/Google Colab alternative each lab also offers. S01's lab is a
-standalone Python application with its own separate uv project — see its own
-`lab/README.md`.
+**One-time environment setup:** this repo is a single [uv](https://docs.astral.sh/uv/)-managed
+Python project at the root — the **only** dependency manifest in the whole course. Every
+session's notebooks, and S01's and S06's standalone CLI apps (`main.py`, `pytest`), all
+install from and run inside this one environment; no session's `lab/` has its own
+`pyproject.toml`/`uv.lock`/`.venv`. From the repo root, a single `uv sync` installs
+everything every session needs — there are no extras or groups to pick. Copy the root
+[`.env.example`](.env.example) — the only one in the repo — to `.env` and fill in the
+keys you need; every optional live-model cell and S01's/S06's `triage`/`main.py` live
+mode find it automatically. See [`docs/TOOLING.md`](docs/TOOLING.md) for the full
+command reference, including the plain-`pip`/Google Colab alternative each lab also
+offers, and each one's own
+`lab/README.md` for its exact quick-start commands.
 
 ## Sessions
 

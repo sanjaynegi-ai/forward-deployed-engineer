@@ -4,7 +4,11 @@ import os
 from .core import Decision
 
 class LiveModel:
+    """Adapt an OpenAI-compatible chat model to the ``core.Model`` interface."""
+
     def __init__(self):
+        """Load credentials and create the optional live API client."""
+
         try:
             from dotenv import load_dotenv
             from openai import OpenAI
@@ -16,6 +20,8 @@ class LiveModel:
         self.client = OpenAI()
         self.model = os.environ["OPENAI_MODEL"]
     def decide(self, ticket, observations, feedback):
+        """Ask the live model for one tool request or one final JSON candidate."""
+
         instructions = ("Classify support ticket into billing, technical, access, general. "
           "Return final JSON with ticket_id, category, priority (low/medium/high), "
           "needs_human (boolean), evidence_source (ticket/account_lookup). "

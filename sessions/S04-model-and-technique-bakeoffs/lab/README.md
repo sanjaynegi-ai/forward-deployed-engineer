@@ -4,14 +4,13 @@
 
 ## 💻 Quick start
 
-1. Open this folder in VS Code or JupyterLab.
-2. Install this lab's two dependencies: `python -m pip install pandas 'pydantic>=2,<3'`
-   (or run the commented `%pip install` line in the notebook's first cell). Using `uv`
-   locally instead? Run `uv sync --group s04` from the repo root, then `uv run jupyter
-   lab` — see `docs/TOOLING.md`.
-3. Open `S04_Northstar_Technique_Bakeoff_Lab.ipynb` and run the cells **top to bottom** —
+Environment setup (dependencies, kernel selection) is a one-time step done once at the
+**repo root**, not per lab — see the root `README.md` / `docs/TOOLING.md`. Once that's
+done:
+
+1. Open `S04_Northstar_Technique_Bakeoff_Lab.ipynb` and run the cells **top to bottom** —
    later cells depend on the ticket set, accounts, and functions defined earlier.
-4. No API key, network access, or paid account is required for the core path. The
+2. No API key, network access, or paid account is required for the core path. The
    optional live-model section (Part 7) is off by default (`RUN_LIVE = False`).
 
 ## 🧩 Concept map
@@ -67,11 +66,10 @@ interview bank's Q10 — practice it here first.
 
 ## 💻 Optional live model mode (requires credentials and provider validation)
 
-1. Install `openai`: `python -m pip install openai` (or `uv sync --group live` from the
-   repo root).
-2. Set `OPENROUTER_API_KEY` in your shell environment. Never commit it or paste it into
-   the notebook.
-3. In Part 7, set `RUN_LIVE = True` and `LIVE_MODEL` to a verified OpenRouter model ID.
+1. Copy the repo root's `.env.example` to `.env` and set `OPENROUTER_API_KEY` there — the
+   notebook's live cell calls `load_dotenv()`, which finds it automatically. Never commit
+   `.env` or paste a key into the notebook.
+2. In Part 7, set `RUN_LIVE = True` and `LIVE_MODEL` to a verified OpenRouter model ID.
 
 This optional section runs **Technique 1 only** — a real single structured call — against
 a real model, and compares it to the mock Technique 2's numbers. A real tool-using agent
